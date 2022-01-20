@@ -4,6 +4,7 @@ import path from "path";
 import { Intents, Interaction, Message } from "discord.js";
 import { Client } from "discordx";
 import { importx } from "@discordx/importer";
+import {LOG} from "./logging";
 
 const client = new Client({
   simpleCommand: { prefix: "~" },
@@ -16,13 +17,16 @@ const client = new Client({
 });
 
 client.once("ready", async () => {
+  // make sure all guilds are in cache
+  await client.guilds.fetch();
+
   await client.initApplicationCommands({
     guild: { log: true },
     global: { log: true },
   });
   await client.initApplicationPermissions();
 
-  console.log("Bot started");
+  LOG.info("Steward started up correctly.");
 });
 
 client.on("interactionCreate", (interaction: Interaction) => {

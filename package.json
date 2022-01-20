@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node build/client.js",
-    "dev": "ts-node src/client.ts"
+    "dev": "nodemon src/client.ts | pino-pretty -c -t"
   },
   "repository": {
     "type": "git",
@@ -24,6 +24,8 @@
   "license": "MIT",
   "homepage": "https://github.com/jackyzha0/discord-steward#readme",
   "devDependencies": {
+    "nodemon": "^2.0.15",
+    "pino-pretty": "^7.4.0",
     "prettier": "^2.5.1",
     "ts-node": "^10.4.0",
     "typescript": "^4.5.4"
@@ -33,6 +35,7 @@
     "discord.js": "^13.5.0",
     "discordx": "^9.1.7",
     "dotenv": "^14.2.0",
+    "pino": "^7.6.3",
     "reflect-metadata": "^0.1.13"
   }
 }
