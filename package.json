@@ -1,0 +1,38 @@
+{
+  "name": "discord-steward",
+  "version": "2.0.0",
+  "description": "Pace-layered approach to high-volume Discord Servers",
+  "main": "build/client.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/client.js",
+    "dev": "ts-node src/client.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jackyzha0/discord-steward.git"
+  },
+  "keywords": [
+    "discordx",
+    "discord.ts",
+    "bot",
+    "discord",
+    "pace layering",
+    "community management"
+  ],
+  "author": "Jacky Zhao <j.zhao2k19@gmail.com> [https://github.com/jackyzha0]",
+  "license": "MIT",
+  "homepage": "https://github.com/jackyzha0/discord-steward#readme",
+  "devDependencies": {
+    "prettier": "^2.5.1",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.4"
+  },
+  "dependencies": {
+    "@discordx/importer": "^1.1.2",
+    "discord.js": "^13.5.0",
+    "discordx": "^9.1.7",
+    "dotenv": "^14.2.0",
+    "reflect-metadata": "^0.1.13"
+  }
+}
