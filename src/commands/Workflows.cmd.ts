@@ -103,7 +103,7 @@ class WorkflowsGroup {
       const members = c.members as Collection<string, GuildMember>
       return {
         name: c.name,
-        value: `${members.filter(m => !m.user.bot).size} people in this channel
+        value: `${members.filter(m => !m.user.bot).size} people in this workflow
         \n**${layers[c.id].length} Layers**\n${formattedLayers(c.id)}`,
       }
     })

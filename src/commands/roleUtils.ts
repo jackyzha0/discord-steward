@@ -127,4 +127,5 @@ export async function fixRolesAndPermissions(interaction: SelectMenuInteraction 
       cat.permissionOverwrites.delete(cat.guild.roles.everyone)
     }
   })
+  return rolesToMake
 }

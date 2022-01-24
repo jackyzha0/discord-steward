@@ -1,7 +1,7 @@
 import {Discord, Slash, SlashGroup} from "discordx";
-import {CommandInteraction, GuildMember, MessageEmbed, Permissions, SelectMenuInteraction} from "discord.js";
+import {CommandInteraction, GuildMember, MessageEmbed, Permissions, Role} from "discord.js";
 import {newLogger, traceCommand} from "../logging";
-import {fixRolesAndPermissions, getLayerMap} from "./roleUtils";
+import {fixRolesAndPermissions, getLayerMap, serverRoles} from "./roleUtils";
 
 const LOG = newLogger('Misc')
 
@@ -21,14 +21,22 @@ class Misc {
       })
     }
 
-    const allRoles = Object.values(getLayerMap(interaction)).flat().map(l => l.roleName)
+    // delete all workflow roles
+    const role = serverRoles(interaction)
+    const workflowRoles = role.filter(r => r.name.match(/ P\d+$/))
+    await Promise.all(workflowRoles.map(role => role.delete()))
+
+    LOG.warn({
+      event: `deleted ${workflowRoles.length} roles`,
+      rolesDeleted: workflowRoles
+    })
 
     // recreate
-    await fixRolesAndPermissions(interaction, true)
+    const madeRoles = await fixRolesAndPermissions(interaction, true)
 
     const embed = new MessageEmbed()
       .setColor('#9c4630')
-      .setDescription('Nuked.')
+      .setDescription(`🧨 Nuked ${workflowRoles.length} roles. Recreated ${madeRoles?.length} roles.`)
 
     return interaction.editReply({ embeds: [embed] })
   }
