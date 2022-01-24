@@ -1,7 +1,7 @@
-import {SimpleCommandMessage} from "discordx";
-import logger from "pino";
-import pino from "pino";
-import {CommandInteraction, DMChannel, GuildBasedChannel, GuildMember} from "discord.js";
+import {SimpleCommandMessage} from "discordx"
+import logger from "pino"
+import pino from "pino"
+import {CommandInteraction, DMChannel, GuildBasedChannel, GuildMember} from "discord.js"
 
 // from https://getpino.io/#/docs/help?id=mapping-pino-log-levels-to-google-cloud-logging-stackdriver-serverity-levels
 const PinoLevelToSeverityLookup: {[key: string]: string} = {
@@ -11,7 +11,7 @@ const PinoLevelToSeverityLookup: {[key: string]: string} = {
   warn: 'WARNING',
   error: 'ERROR',
   fatal: 'CRITICAL',
-};
+}
 
 const defaultPinoConf = {
   messageKey: 'message',

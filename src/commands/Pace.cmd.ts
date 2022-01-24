@@ -1,7 +1,7 @@
-import {Discord, Slash, SlashGroup} from "discordx";
-import {newLogger, traceCommand} from "../logging";
-import {CommandInteraction, GuildMemberRoleManager, MessageEmbed} from "discord.js";
-import {getLayerMap} from "./roleUtils";
+import {Discord, Slash, SlashGroup} from "discordx"
+import {newLogger, traceCommand} from "../logging"
+import {CommandInteraction, GuildMemberRoleManager, MessageEmbed} from "discord.js"
+import {getLayerMap} from "./roleUtils"
 
 const LOG = newLogger('Pace')
 

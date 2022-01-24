@@ -1,7 +1,7 @@
-import {Discord, Slash, SlashGroup} from "discordx";
-import {CommandInteraction, GuildMember, MessageEmbed, Permissions} from "discord.js";
-import {newLogger, traceCommand} from "../logging";
-import {fixRolesAndPermissions, serverRoles} from "./roleUtils";
+import {Discord, Slash, SlashGroup} from "discordx"
+import {CommandInteraction, GuildMember, MessageEmbed, Permissions} from "discord.js"
+import {newLogger, traceCommand} from "../logging"
+import {fixRolesAndPermissions, serverRoles} from "./roleUtils"
 
 const LOG = newLogger('Misc')
 

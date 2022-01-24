@@ -1,4 +1,4 @@
-import ColorHash from "color-hash-ts";
+import ColorHash from "color-hash-ts"
 import {
   ColorResolvable,
   CommandInteraction,
@@ -6,12 +6,12 @@ import {
   GuildChannel,
   Role,
   SelectMenuInteraction
-} from "discord.js";
-import {newLogger} from "../logging";
+} from "discord.js"
+import {newLogger} from "../logging"
 
 const LOG = newLogger('Util')
 
-export const colorHash = new ColorHash({ lightness: 0.6, saturation: 0.4 });
+export const colorHash = new ColorHash({ lightness: 0.6, saturation: 0.4 })
 export function channelToRole(channelName: string): string | undefined {
   return /^🌿[-_\s](\S+)/g.exec(channelName)?.[1].replace(/[-_\s]/i, " ")
 }

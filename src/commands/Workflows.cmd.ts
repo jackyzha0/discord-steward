@@ -16,7 +16,7 @@ import {
   fixRolesAndPermissions,
   getLayerMap,
   getWorkflowChannels,
-} from "./roleUtils";
+} from "./roleUtils"
 
 const LOG = newLogger('Workflows')
 

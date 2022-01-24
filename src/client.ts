@@ -7,7 +7,6 @@ import { importx } from "@discordx/importer"
 import {LOG} from "./logging"
 
 const client = new Client({
-  simpleCommand: { prefix: "~" },
   intents: [
     Intents.FLAGS.GUILDS,
     Intents.FLAGS.GUILD_MESSAGES,
@@ -40,7 +39,6 @@ client.on("interactionCreate", (interaction: Interaction) => {
 client.on("messageCreate", (message: Message) => {
   client.executeCommand(message).catch(err => LOG.error(err))
 })
-
 
 importx(path.join(__dirname, "commands", "**/*.cmd.{ts,js}")).then(() => {
   client.login(process.env.TOKEN ?? "")
