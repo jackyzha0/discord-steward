@@ -4,7 +4,8 @@ import {
 } from "discordx"
 import {newLogger, traceCommand} from "../logging"
 import {
-  CommandInteraction, GuildMemberRoleManager,
+  Collection,
+  CommandInteraction, GuildMember, GuildMemberRoleManager,
   MessageActionRow,
   MessageEmbed,
   MessageSelectMenu, Role,
@@ -117,10 +118,14 @@ class WorkflowsGroup {
     await interaction.deferReply({ ephemeral: true })
     traceCommand(LOG, interaction)
 
-    const layout = this.getWorkflowChannels(interaction).map(c => ({
-      name: c.name,
-      value: `Role: \`${channelToRole(c.name)}\`\nChannel: \`${c.name}\``,
-    }))
+    const allRoles = interaction.guild?.roles.cache
+    const layout = this.getWorkflowChannels(interaction).map(c => {
+      const members = c.members as Collection<string, GuildMember>
+      return {
+        name: c.name,
+        value: `Role: ${allRoles?.find(role => role.name === channelToRole(c.name))?.toString()}\nSize: ${members.size}`,
+      }
+    })
 
     const embed = new MessageEmbed()
       .setColor('#B5936E')
