@@ -29,14 +29,17 @@ class WorkflowsGroup {
   }
 
   createRoleSelectMenu(interaction: CommandInteraction, menuType: "join" | "leave") {
-    const roles = this.getWorkflowChannels(interaction)
-      .map(c => ({
-        label: channelToRole(c.name) || "",
-        value: channelToRole(c.name) || ""
-      }))
+    const userRoles = interaction.member?.roles as GuildMemberRoleManager
+    const workflowRoles = this.getWorkflowChannels(interaction).map(c => channelToRole(c.name) || "c")
+    const roles = menuType === "join" ?
+      workflowRoles.map(c => ({ label: c, value: c }))
+      : [...userRoles.cache.values()].filter(r => workflowRoles.includes(r.name)).map(r => ({
+          label: r.name,
+          value: r.name
+        }))
     const roleSelection = new MessageSelectMenu()
       .addOptions(roles)
-      .setPlaceholder("Select a project")
+      .setPlaceholder(`Select projects to ${menuType}`)
       .setMinValues(1)
       .setMaxValues(roles.length)
       .setCustomId(`${menuType}-role-menu`)
@@ -46,9 +49,6 @@ class WorkflowsGroup {
   async createMissingRoles(interaction: SelectMenuInteraction) {
     const serverRoles = [...interaction.guild?.roles.cache.values() || []].map(r => r.name)
     const workflowRoles = this.getWorkflowChannels(interaction).map(c => channelToRole(c.name) || "")
-
-    console.log(serverRoles, workflowRoles)
-
     const rolesToMake = workflowRoles
       .filter(role => !serverRoles.includes(role))
 
@@ -74,11 +74,7 @@ class WorkflowsGroup {
     await this.createMissingRoles(interaction)
 
     const allRoles = interaction.guild?.roles.cache
-
-    // selected roles
     const selectedRoleValues = interaction.values || []
-
-    // user roles
     const roles = interaction.member?.roles as GuildMemberRoleManager
     const userRoleValues = [...roles.cache.values()].map(r => r.name)
 
@@ -94,6 +90,23 @@ class WorkflowsGroup {
 
     ids.forEach(roleId => roles.add(roleId))
     return interaction.followUp(`✨ Added you to ${ids.length} new workflows! ${ids.map(role => role.toString()).join(", ")}`)
+  }
+
+  @SelectMenuComponent("leave-role-menu")
+  async handleLeave(interaction: SelectMenuInteraction): Promise<unknown> {
+    await interaction.deferReply({ ephemeral: true })
+    await this.createMissingRoles(interaction)
+
+    const allRoles = interaction.guild?.roles.cache
+    const selectedRoleValues = interaction.values || []
+    const roles = interaction.member?.roles as GuildMemberRoleManager
+
+    const ids = selectedRoleValues
+      .map(roleName => allRoles?.find(role => role.name === roleName))
+      .filter((role): role is Role => role !== undefined)
+
+    ids.forEach(roleId => roles.remove(roleId))
+    return interaction.followUp(`✨ Removed you from ${ids.length} workflows! ${ids.map(role => role.toString()).join(", ")}`)
   }
 
   @Slash("list", { description: "Show all workflows/projects" })
@@ -127,15 +140,15 @@ class WorkflowsGroup {
     })
   }
 
-  // @Slash("leave", { description: "Unsubscribe from existing workflows/projects" })
-  // async leave(interaction: CommandInteraction): Promise<unknown> {
-  //   await interaction.deferReply({ ephemeral: true })
-  //   traceCommand(LOG, interaction)
-  //   const menu = this.createRoleSelectMenu(interaction, "join")
-  //
-  //   return interaction.editReply({
-  //     content: "🌱 Select workflows to join",
-  //     components: [menu],
-  //   })
-  // }
+  @Slash("leave", { description: "Unsubscribe from existing workflows/projects" })
+  async leave(interaction: CommandInteraction): Promise<unknown> {
+    await interaction.deferReply({ ephemeral: true })
+    traceCommand(LOG, interaction)
+    const menu = this.createRoleSelectMenu(interaction, "leave")
+
+    return interaction.editReply({
+      content: "🧹 Select workflows to leave",
+      components: [menu],
+    })
+  }
 }
