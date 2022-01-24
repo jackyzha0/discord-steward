@@ -5,11 +5,11 @@ import {
 import {newLogger, traceCommand} from "../logging"
 import {
   Collection,
-  CommandInteraction, GuildMember, GuildMemberRoleManager,
+  CommandInteraction, GuildBasedChannel, GuildMember, GuildMemberRoleManager,
   MessageActionRow,
   MessageEmbed,
   MessageSelectMenu, Role,
-  SelectMenuInteraction
+  SelectMenuInteraction, TextChannel
 } from "discord.js"
 
 const LOG = newLogger('Workflows')
@@ -18,9 +18,34 @@ function channelToRole(channelName: string): string | undefined {
   return /^🌿[-_\s](\S+)/g.exec(channelName)?.[1].replace(/[-_\s]/i, " ")
 }
 
+interface Layer {
+  depth: number
+  channel: GuildBasedChannel
+}
+
 @Discord()
 @SlashGroup("workflows", "Manage different projects and workflows")
 class WorkflowsGroup {
+
+  getLayerMap(interaction: CommandInteraction | SelectMenuInteraction) {
+    const channels = [...interaction.guild?.channels.cache.values() || []]
+    const layers = channels.reduce<{[key: string]: Layer[]}>((total, cur) => {
+      if (cur.type === "GUILD_CATEGORY") {
+        total[cur.id] = []
+      } else {
+        const depthString = cur.name.match(/p(\d+)/)?.[1]
+        if (depthString !== undefined) {
+          total[cur.parentId ?? ""].push({
+            depth: parseInt(depthString),
+            channel: cur
+          })
+        }
+      }
+      return total
+    }, {})
+
+    return layers
+  }
 
   getWorkflowChannels(interaction: CommandInteraction | SelectMenuInteraction) {
     const channels = [...interaction.guild?.channels.cache.values() || []]
@@ -119,20 +144,25 @@ class WorkflowsGroup {
     traceCommand(LOG, interaction)
 
     const allRoles = interaction.guild?.roles.cache
+    const layers = this.getLayerMap(interaction)
+    const formattedLayers = (id: string) => layers[id]
+      .sort((a, b) => a.depth - b.depth)
+      .map(l => `Layer ${l.depth}: ${l.channel}`).join('\n')
     const layout = this.getWorkflowChannels(interaction).map(c => {
       const members = c.members as Collection<string, GuildMember>
       return {
         name: c.name,
-        value: `Role: ${allRoles?.find(role => role.name === channelToRole(c.name))?.toString()}\nSize: ${members.size}`,
+        value: `${members.size} people with role ${allRoles?.find(role => role.name === channelToRole(c.name))?.toString()}
+        \n**${layers[c.id].length} Layers**\n${formattedLayers(c.id)}`,
       }
     })
 
     const embed = new MessageEmbed()
       .setColor('#B5936E')
-      .setDescription(`Found ${layout.length} workflows. New workflows can be created by making a category that starts with the emoji 🌿`)
+      .setDescription(`Found ${layout.length} workflows. New workflows can be created by making a category that starts with the emoji 🌿.`)
       .setFields(layout)
+      .setFooter("___\nLayers are ordered in terms of message flow. Lower layer number means more frequent and noisy updates, whereas higher layer numbers are less frequent and higher signal information.")
 
-    // send it
     return interaction.editReply({ embeds: [embed] })
   }
 
