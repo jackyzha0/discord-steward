@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@discordx/importer": "^1.1.2",
+    "color-hash-ts": "^0.0.7",
     "discord.js": "^13.6.0",
     "discordx": "^9.1.12",
     "dotenv": "^14.2.0",
