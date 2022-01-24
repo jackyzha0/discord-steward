@@ -31,7 +31,7 @@ const defaultPinoConf = {
 export const LOG = pino(Object.assign({}, defaultPinoConf, defaultPinoConf))
 
 export const newLogger = (command: string) => LOG.child({ cmd: command })
-export const trace = (logger: logger.Logger, command: CommandInteraction ) => {
+export const traceCommand = (logger: logger.Logger, command: CommandInteraction ) => {
   if (!(command.channel?.partial)) {
     const channel = command.channel as GuildBasedChannel
     const member = command.member as GuildMember
