@@ -1,15 +1,16 @@
-import {
-  Discord, SelectMenuComponent,
-  Slash, SlashGroup,
-} from "discordx"
+import {Discord, SelectMenuComponent, Slash, SlashGroup,} from "discordx"
 import {newLogger, traceCommand} from "../logging"
 import {
   Collection,
-  CommandInteraction, GuildBasedChannel, GuildMember, GuildMemberRoleManager,
+  CommandInteraction,
+  GuildBasedChannel, GuildChannel,
+  GuildMember,
+  GuildMemberRoleManager,
   MessageActionRow,
   MessageEmbed,
-  MessageSelectMenu, Role,
-  SelectMenuInteraction, TextChannel
+  MessageSelectMenu,
+  Role,
+  SelectMenuInteraction
 } from "discord.js"
 
 const LOG = newLogger('Workflows')
@@ -29,7 +30,7 @@ class WorkflowsGroup {
 
   getLayerMap(interaction: CommandInteraction | SelectMenuInteraction) {
     const channels = [...interaction.guild?.channels.cache.values() || []]
-    const layers = channels.reduce<{[key: string]: Layer[]}>((total, cur) => {
+    return channels.reduce<{ [key: string]: Layer[] }>((total, cur) => {
       if (cur.type === "GUILD_CATEGORY") {
         total[cur.id] = []
       } else {
@@ -43,8 +44,6 @@ class WorkflowsGroup {
       }
       return total
     }, {})
-
-    return layers
   }
 
   getWorkflowChannels(interaction: CommandInteraction | SelectMenuInteraction) {
@@ -75,18 +74,16 @@ class WorkflowsGroup {
     return new MessageActionRow().addComponents(roleSelection)
   }
 
-  async createMissingRoles(interaction: SelectMenuInteraction) {
-    const serverRoles = [...interaction.guild?.roles.cache.values() || []].map(r => r.name)
+  async fixRolesAndPermissions(interaction: SelectMenuInteraction) {
+    const serverRoles = [...interaction.guild?.roles.cache.values() || []]
     const workflowRoles = this.getWorkflowChannels(interaction).map(c => channelToRole(c.name) || "")
     const rolesToMake = workflowRoles
-      .filter(role => !serverRoles.includes(role))
+      .filter(role => !serverRoles.map(r => r.name).includes(role))
 
-    if (rolesToMake.length > 0) {
-      LOG.info({
-        event: `created ${rolesToMake.length} missing roles`,
-        rolesCreated: rolesToMake
-      })
-    }
+    // early return if all roles are setup
+    // if (rolesToMake.length === 0) {
+    //   return
+    // }
 
     // create missing roles
     await Promise.all(rolesToMake
@@ -95,12 +92,35 @@ class WorkflowsGroup {
         color: "RANDOM",
         reason: "Steward workflow role creation",
       })))
+    LOG.info({
+      event: `created ${rolesToMake.length} missing roles`,
+      rolesCreated: rolesToMake
+    })
+
+    // bot role
+    const botRole = serverRoles.find(r => r.name === "Steward") as Role
+
+    // do channel setup now
+    const workflowChannels = this.getWorkflowChannels(interaction) as GuildChannel[]
+    workflowChannels.forEach((c) => {
+      // by default, hide from all, allow self
+      c.permissionOverwrites.create(botRole, { VIEW_CHANNEL: true })
+      c.permissionOverwrites.create(c.guild.roles.everyone, { VIEW_CHANNEL: false })
+
+      // get role name for associated workstream and allow viewing
+      const role = serverRoles.find(r => r.name === channelToRole(c.name))
+      if (role) {
+        c.permissionOverwrites.create(role, { VIEW_CHANNEL: true })
+      } else {
+        LOG.error(`Couldn't find role ${channelToRole(c.name)} in server!`)
+      }
+    })
   }
 
   @SelectMenuComponent("join-role-menu")
   async handleJoin(interaction: SelectMenuInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
-    await this.createMissingRoles(interaction)
+    await this.fixRolesAndPermissions(interaction)
 
     const allRoles = interaction.guild?.roles.cache
     const selectedRoleValues = interaction.values || []
@@ -118,13 +138,13 @@ class WorkflowsGroup {
     }
 
     ids.forEach(roleId => roles.add(roleId))
-    return interaction.followUp(`✨ Added you to ${ids.length} new workflows! ${ids.map(role => role.toString()).join(", ")}`)
+    return interaction.followUp(`✨ Added you to ${ids.length} new workflows! ${ids.map(role => role.toString()).join(", ")}.\n\n Set your pace layer for these projects by doing \`/pace set\``)
   }
 
   @SelectMenuComponent("leave-role-menu")
   async handleLeave(interaction: SelectMenuInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
-    await this.createMissingRoles(interaction)
+    await this.fixRolesAndPermissions(interaction)
 
     const allRoles = interaction.guild?.roles.cache
     const selectedRoleValues = interaction.values || []
@@ -152,7 +172,7 @@ class WorkflowsGroup {
       const members = c.members as Collection<string, GuildMember>
       return {
         name: c.name,
-        value: `${members.size} people with role ${allRoles?.find(role => role.name === channelToRole(c.name))?.toString()}
+        value: `${members.filter(m => !m.user.bot).size} people with role ${allRoles?.find(role => role.name === channelToRole(c.name))?.toString()}
         \n**${layers[c.id].length} Layers**\n${formattedLayers(c.id)}`,
       }
     })
@@ -161,7 +181,7 @@ class WorkflowsGroup {
       .setColor('#B5936E')
       .setDescription(`Found ${layout.length} workflows. New workflows can be created by making a category that starts with the emoji 🌿.`)
       .setFields(layout)
-      .setFooter("___\nLayers are ordered in terms of message flow. Lower layer number means more frequent and noisy updates, whereas higher layer numbers are less frequent and higher signal information.")
+      .setFooter({text: "___\nLayers are ordered in terms of message flow. Lower layer number means more frequent and noisy updates, whereas higher layer numbers are less frequent and higher signal information."})
 
     return interaction.editReply({ embeds: [embed] })
   }

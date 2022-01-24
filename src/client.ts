@@ -1,10 +1,10 @@
-import "dotenv/config";
-import "reflect-metadata";
-import path from "path";
-import { Intents, Interaction, Message } from "discord.js";
-import { Client } from "discordx";
-import { importx } from "@discordx/importer";
-import {LOG} from "./logging";
+import "dotenv/config"
+import "reflect-metadata"
+import path from "path"
+import { Intents, Interaction, Message } from "discord.js"
+import { Client } from "discordx"
+import { importx } from "@discordx/importer"
+import {LOG} from "./logging"
 
 const client = new Client({
   simpleCommand: { prefix: "~" },
@@ -14,33 +14,34 @@ const client = new Client({
     Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
   ],
   botGuilds: [(client) => client.guilds.cache.map((guild) => guild.id)],
-});
+})
 
 client.once("ready", async () => {
-  // make sure all guilds are in cache
-  await client.guilds.fetch();
+  await client.guilds.fetch()
 
   await client.initApplicationCommands({
     guild: { log: true },
     global: { log: true },
-  });
-  await client.initApplicationPermissions();
+  })
+  await client.initApplicationPermissions()
+  client.user?.setActivity("/steward help")
 
-  LOG.info("Steward started up correctly.");
-});
+  LOG.info("Steward started up correctly.")
+})
 
 client.on("interactionCreate", (interaction: Interaction) => {
   try {
-    client.executeInteraction(interaction);
+    client.executeInteraction(interaction)
   } catch (err) {
     LOG.error(err)
   }
-});
+})
 
 client.on("messageCreate", (message: Message) => {
-  client.executeCommand(message).catch(err => LOG.error(err));
-});
+  client.executeCommand(message).catch(err => LOG.error(err))
+})
+
 
 importx(path.join(__dirname, "commands", "**/*.cmd.{ts,js}")).then(() => {
-  client.login(process.env.TOKEN ?? ""); // provide your bot token
-});
+  client.login(process.env.TOKEN ?? "")
+})
