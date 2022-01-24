@@ -30,11 +30,15 @@ client.once("ready", async () => {
 });
 
 client.on("interactionCreate", (interaction: Interaction) => {
-  client.executeInteraction(interaction);
+  try {
+    client.executeInteraction(interaction);
+  } catch (err) {
+    LOG.error(err)
+  }
 });
 
 client.on("messageCreate", (message: Message) => {
-  client.executeCommand(message);
+  client.executeCommand(message).catch(err => LOG.error(err));
 });
 
 importx(path.join(__dirname, "commands", "**/*.cmd.{ts,js}")).then(() => {

@@ -37,6 +37,9 @@ class WorkflowsGroup {
           label: r.name,
           value: r.name
         }))
+    if (roles.length === 0) {
+      throw 'No roles to leave!'
+    }
     const roleSelection = new MessageSelectMenu()
       .addOptions(roles)
       .setPlaceholder(`Select projects to ${menuType}`)
@@ -144,11 +147,20 @@ class WorkflowsGroup {
   async leave(interaction: CommandInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
     traceCommand(LOG, interaction)
-    const menu = this.createRoleSelectMenu(interaction, "leave")
 
-    return interaction.editReply({
-      content: "🧹 Select workflows to leave",
-      components: [menu],
-    })
+    try {
+      const menu = this.createRoleSelectMenu(interaction, "leave")
+      return interaction.editReply({
+        content: "🧹 Select workflows to leave",
+        components: [menu],
+      })
+    } catch (e) {
+      if (e === "No roles to leave!") {
+        return interaction.editReply({
+          content: "❌ You are not a part of any workflows that can be left!",
+        })
+      }
+      return
+    }
   }
 }
