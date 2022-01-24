@@ -1,6 +1,7 @@
 import {Discord, Slash, SlashGroup} from "discordx";
 import {CommandInteraction, GuildMember, MessageEmbed, Permissions, SelectMenuInteraction} from "discord.js";
 import {newLogger, traceCommand} from "../logging";
+import {fixRolesAndPermissions, getLayerMap} from "./roleUtils";
 
 const LOG = newLogger('Misc')
 
@@ -19,6 +20,11 @@ class Misc {
         content: "❌ You must be an administrator to perform this command",
       })
     }
+
+    const allRoles = Object.values(getLayerMap(interaction)).flat().map(l => l.roleName)
+
+    // recreate
+    await fixRolesAndPermissions(interaction, true)
 
     const embed = new MessageEmbed()
       .setColor('#9c4630')

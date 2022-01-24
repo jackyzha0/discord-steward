@@ -27,8 +27,16 @@ export interface Layer {
   workflowName: string | undefined
 }
 
+export function serverChannels(interaction: CommandInteraction | SelectMenuInteraction) {
+  return [...interaction.guild?.channels.cache.values() || []]
+}
+
+export function serverRoles(interaction: CommandInteraction | SelectMenuInteraction) {
+  return [...interaction.guild?.roles.cache.values() || []]
+}
+
 export function getLayerMap(interaction: CommandInteraction | SelectMenuInteraction) {
-  const channels = [...interaction.guild?.channels.cache.values() || []]
+  const channels = serverChannels(interaction)
   return channels
     .reduce<{ [key: string]: Layer[] }>((total, cur) => {
       if (cur.type === "GUILD_CATEGORY") {
@@ -52,14 +60,14 @@ export function getLayerMap(interaction: CommandInteraction | SelectMenuInteract
 }
 
 export function getWorkflowChannels(interaction: CommandInteraction | SelectMenuInteraction) {
-  const channels = [...interaction.guild?.channels.cache.values() || []]
+  const channels = serverChannels(interaction)
   return channels
     .filter(c => c.type === "GUILD_CATEGORY")
     .filter(isWorkFlow)
 }
 
-export async function fixRolesAndPermissions(interaction: SelectMenuInteraction) {
-  let serverRoles = [...interaction.guild?.roles.cache.values() || []]
+export async function fixRolesAndPermissions(interaction: SelectMenuInteraction | CommandInteraction, force = false) {
+  let roles = serverRoles(interaction)
   const layerMap = getLayerMap(interaction)
   const layerRoles = Object.values(layerMap)
     .flat()
@@ -68,10 +76,10 @@ export async function fixRolesAndPermissions(interaction: SelectMenuInteraction)
       name: l.roleName
     }))
 
-  const rolesToMake = layerRoles.filter(role => !serverRoles.map(r => r.name).includes(role.name || ""))
+  const rolesToMake = layerRoles.filter(role => !roles.map(r => r.name).includes(role.name || ""))
 
-  // early return if all roles are setup
-  if (rolesToMake.length === 0) {
+  // early return if all roles are setup (and not forced)
+  if (rolesToMake.length === 0 && !force) {
     return
   }
 
@@ -88,12 +96,12 @@ export async function fixRolesAndPermissions(interaction: SelectMenuInteraction)
   })
 
   // bot role + refresh roles after creating new ones
-  serverRoles = [...interaction.guild?.roles.cache.values() || []]
-  const getRoleByName = (name: string) => serverRoles.find(r => r.name === name) as Role
+  roles = serverRoles(interaction)
+  const getRoleByName = (name: string) => roles.find(r => r.name === name) as Role
   const botRole = getRoleByName("Steward")
 
   // bind workflow channels to roles
-  const channels = [...interaction.guild?.channels.cache.values() || []]
+  const channels = serverChannels(interaction)
   const findChannelById = (id: string) => channels.find(c => c.id === id) as GuildChannel
   Object.keys(layerMap).forEach(workflowCategoryId => {
     // by default, hide from all, allow bot to view
