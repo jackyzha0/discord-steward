@@ -32,8 +32,8 @@
   },
   "dependencies": {
     "@discordx/importer": "^1.1.2",
-    "discord.js": "^13.5.0",
-    "discordx": "^9.1.7",
+    "discord.js": "^13.6.0",
+    "discordx": "^9.1.12",
     "dotenv": "^14.2.0",
     "pino": "^7.6.3",
     "reflect-metadata": "^0.1.13"

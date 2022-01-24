@@ -1,7 +1,7 @@
 import {SimpleCommandMessage} from "discordx";
 import logger from "pino";
 import pino from "pino";
-import {DMChannel} from "discord.js";
+import {CommandInteraction, DMChannel, GuildBasedChannel, GuildMember} from "discord.js";
 
 // from https://getpino.io/#/docs/help?id=mapping-pino-log-levels-to-google-cloud-logging-stackdriver-serverity-levels
 const PinoLevelToSeverityLookup: {[key: string]: string} = {
@@ -31,17 +31,18 @@ const defaultPinoConf = {
 export const LOG = pino(Object.assign({}, defaultPinoConf, defaultPinoConf))
 
 export const newLogger = (command: string) => LOG.child({ cmd: command })
-export const trace = (logger: logger.Logger, command: SimpleCommandMessage) => {
-  const m = command.message
-  if (!(m.channel instanceof DMChannel) && !(m.channel.partial)) {
+export const trace = (logger: logger.Logger, command: CommandInteraction ) => {
+  if (!(command.channel?.partial)) {
+    const channel = command.channel as GuildBasedChannel
+    const member = command.member as GuildMember
     logger.info({
-      user: m.member?.id,
-      content: m.cleanContent,
-      guildName: m.guild?.name || "Guild name unknown",
-      guildId: m.guildId,
-      channelName: m.channel.name,
-      channelId: m.channelId,
-      timestamp: m.createdTimestamp
+      user: member.id,
+      command: command.options.data,
+      guildName: command.guild?.name || "Guild name unknown",
+      guildId: command.guildId,
+      channelName: channel.name,
+      channelId: channel.id,
+      timestamp: command.createdTimestamp
     })
   }
 }
