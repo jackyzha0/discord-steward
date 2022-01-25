@@ -25,6 +25,7 @@
   "homepage": "https://github.com/jackyzha0/discord-steward#readme",
   "devDependencies": {
     "@types/koa": "^2.13.4",
+    "@types/koa__router": "^8.0.11",
     "discord-api-types": "^0.26.1",
     "nodemon": "^2.0.15",
     "pino-pretty": "^7.4.0",
