@@ -53,9 +53,9 @@ class Pace {
 
   createWorkflowSelectionMenu(interaction: CommandInteraction) {
     const userRoles = interaction.member?.roles as GuildMemberRoleManager
-    const workflowRoles = getWorkflowChannels(interaction).map(c => channelToRole(c.name) || "c")
+    const workflowRoles = getWorkflowChannels(interaction).map(c => channelToRole(c.name) || "")
     const paceRoles = [...userRoles.cache.values()].filter(r => workflowRoles.some(wf => r.name.startsWith(wf))).map(r => ({
-      label: r.name,
+      label: r.name.replace(/ P\d+$/, ""),
       value: r.name.replace(/ P\d+$/, "")
     }))
     const roleSelection = new MessageSelectMenu()

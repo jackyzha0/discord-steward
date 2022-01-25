@@ -47,8 +47,20 @@ class Misc {
     traceCommand(LOG, interaction)
 
     const embed = new MessageEmbed()
-      .setColor('#9c4630')
-      .setDescription('bottom text.')
+      .setColor('#B5936E')
+      .setTitle("Steward Help Page")
+      .setDescription('Stream interfaces like Discord and Slack basically create a single global timeline that moves at a certain rate. If you miss a certain conversation, it flows away. ' +
+        'Someone once described Slack as the online version of the open office arrangement – it puts the pressure of everything being visible all the time to everybody on the individual. ' +
+        'Steward is an attempt to give back agency to users to control the speed of information in the projects they are a part of.')
+      .addFields(
+        { name: 'Get Started', value: `
+        - See what workflows are available using \`/workflows list\`
+        - Join a workflow using \`/workflows join\`
+        - Set your pace level using \`/pace set\`
+        - React to messages using ✨. This is referred to as 'democratic pinning' where messages that surpass a number of reactions get boosted up a pace layer.
+        ` },
+      )
+      .setFooter({ text: '___\nView source @ https://github.com/jackyzha0/discord-steward/' });
 
     return interaction.editReply({ embeds: [embed] })
   }
