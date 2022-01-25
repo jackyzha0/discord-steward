@@ -5,6 +5,7 @@ import { Intents, Interaction, Message } from "discord.js"
 import { Client } from "discordx"
 import { importx } from "@discordx/importer"
 import {LOG} from "./logging"
+import {Koa} from "@discordx/koa";
 
 const client = new Client({
   intents: [
@@ -41,6 +42,17 @@ client.on("messageCreate", (message: Message) => {
   client.executeCommand(message).catch(err => LOG.error(err))
 })
 
-importx(path.join(__dirname, "commands", "**/*.cmd.{ts,js}")).then(() => {
-  client.login(process.env.TOKEN ?? "")
-})
+async function run() {
+  await importx(path.join(__dirname, "{commands,api}", "**/*.cmd.{ts,js}"))
+  await client.login(process.env.TOKEN ?? "")
+
+  const server = new Koa()
+  await server.build()
+  const port = process.env.PORT ?? 8080
+  server.listen(port, () => {
+    LOG.info(`api server started on ${port}`)
+  })
+}
+
+run()
+

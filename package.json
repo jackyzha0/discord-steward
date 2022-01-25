@@ -24,6 +24,7 @@
   "license": "MIT",
   "homepage": "https://github.com/jackyzha0/discord-steward#readme",
   "devDependencies": {
+    "@types/koa": "^2.13.4",
     "discord-api-types": "^0.26.1",
     "nodemon": "^2.0.15",
     "pino-pretty": "^7.4.0",
@@ -33,10 +34,12 @@
   },
   "dependencies": {
     "@discordx/importer": "^1.1.2",
+    "@discordx/koa": "^1.0.7",
     "color-hash-ts": "^0.0.7",
     "discord.js": "^13.6.0",
     "discordx": "^9.1.12",
     "dotenv": "^14.2.0",
+    "koa": "^2.13.4",
     "pino": "^7.6.3",
     "reflect-metadata": "^0.1.13"
   }
