@@ -12,6 +12,7 @@ const client = new Client({
     Intents.FLAGS.GUILD_MESSAGES,
     Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
   ],
+  partials: ['MESSAGE', 'CHANNEL', 'REACTION'],
   botGuilds: [(client) => client.guilds.cache.map((guild) => guild.id)],
 })
 

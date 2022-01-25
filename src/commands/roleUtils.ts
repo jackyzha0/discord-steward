@@ -3,7 +3,7 @@ import {
   ColorResolvable,
   CommandInteraction,
   GuildBasedChannel,
-  GuildChannel,
+  GuildChannel, GuildChannelManager,
   Role,
   SelectMenuInteraction
 } from "discord.js"
@@ -35,9 +35,11 @@ export function serverRoles(interaction: CommandInteraction | SelectMenuInteract
   return [...interaction.guild?.roles.cache.values() || []]
 }
 
-export function getLayerMap(interaction: CommandInteraction | SelectMenuInteraction) {
-  const channels = serverChannels(interaction)
-  return channels
+export function guildLayerMap(channels: GuildChannelManager | undefined) {
+  if (!channels) {
+    return {}
+  }
+  return [...channels.cache.values()]
     .reduce<{ [key: string]: Layer[] }>((total, cur) => {
       if (cur.type === "GUILD_CATEGORY") {
         total[cur.id] = []
@@ -57,6 +59,10 @@ export function getLayerMap(interaction: CommandInteraction | SelectMenuInteract
       }
       return total
     }, {})
+}
+
+export function getLayerMap(interaction: CommandInteraction | SelectMenuInteraction) {
+  return guildLayerMap(interaction.guild?.channels)
 }
 
 export function getWorkflowChannels(interaction: CommandInteraction | SelectMenuInteraction) {
