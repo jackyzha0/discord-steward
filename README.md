@@ -11,8 +11,6 @@ How can we create [mangroves](https://jzhao.xyz/thoughts/Mangrove-Theory-of-the-
 
 Steward is an attempt to give back agency to users to control the speed of information in the projects they are a part of.
 
----
-
 ## Installation
 [Invite the Steward to your server!](https://discord.com/api/oauth2/authorize?client_id=933619858120249374&permissions=268438608&scope=bot%20applications.commands)
 

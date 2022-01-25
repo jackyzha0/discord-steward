@@ -1,0 +1,10 @@
+{
+  "name": "discord-steward",
+  "env": {
+    "TOKEN": {
+      "description": "Discord Bot Token",
+      "value": "#B5936E",
+      "required": true
+    },
+  }
+}
