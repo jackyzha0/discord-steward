@@ -18,6 +18,7 @@ class Pace {
   @Slash("list", { description: "See current pace for workflows" })
   async list(interaction: CommandInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
+    await fixRolesAndPermissions(interaction)
     traceCommand(LOG, interaction)
 
     const roles = interaction.member?.roles as GuildMemberRoleManager
@@ -123,6 +124,7 @@ class Pace {
   @Slash("set", { description: "Set current pace layer for a workflow" })
   async set(interaction: CommandInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
+    await fixRolesAndPermissions(interaction)
     traceCommand(LOG, interaction)
 
     const menu = this.createWorkflowSelectionMenu(interaction)

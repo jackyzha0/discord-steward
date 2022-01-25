@@ -1,6 +1,6 @@
 import {ArgsOf, Discord, On} from "discordx"
 import {GuildChannel, MessageEmbed, MessageReaction, TextBasedChannel} from "discord.js"
-import {guildLayerMap, isWorkFlow, Layer} from "./roleUtils";
+import {guildLayerMap, Layer} from "./roleUtils";
 import {newLogger} from "../logging";
 
 const LOG = newLogger('Starboard')
@@ -39,12 +39,11 @@ class Starboard {
 
       const sentChannel = reaction.message.channel as GuildChannel
       const channelSize = sentChannel.members.size
+      const layers = Object.values(guildLayerMap(reaction.message.guild?.channels)).flat()
       const isHighSignal = (reaction.count || 0) === Math.ceil(1.3 * Math.sqrt(channelSize / 2))
 
-      if (isHighSignal && isWorkFlow(sentChannel)) {
-        const layers = Object.values(guildLayerMap(reaction.message.guild?.channels)).flat()
+      if (isHighSignal && layers.map(l => l.channel.id).includes(sentChannel.id)) {
         const sentLayer = layers.find(l => l.channel.id === sentChannel.id) as Layer
-
         const workflowLayers = layers
           .filter(l => l.workflowName === sentLayer.workflowName)
           .sort((a, b) => a.depth - b.depth)

@@ -91,6 +91,7 @@ class WorkflowsGroup {
   @Slash("list", { description: "Show all workflows/projects" })
   async list(interaction: CommandInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
+    await fixRolesAndPermissions(interaction)
     traceCommand(LOG, interaction)
 
     const allRoles = interaction.guild?.roles.cache

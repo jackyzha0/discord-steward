@@ -13,7 +13,7 @@ const LOG = newLogger('Util')
 
 export const colorHash = new ColorHash({ lightness: 0.6, saturation: 0.4 })
 export function channelToRole(channelName: string): string | undefined {
-  return /^🌿[-_\s](\S+)/g.exec(channelName)?.[1].replace(/[-_\s]/i, " ")
+  return /^🌿[-_\s]([\S\s-_]+)/g.exec(channelName)?.[1].replace(/[-_\s]/i, " ")
 }
 
 export function isWorkFlow(c: GuildBasedChannel | GuildChannel | null): boolean {
