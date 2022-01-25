@@ -5,9 +5,10 @@ COPY package.json ./
 COPY package-lock.json ./
 
 RUN npm install
+RUN npm install typescript -g
 
 COPY . .
 
-EXPOSE 3001
+RUN tsc
 
 ENTRYPOINT ["npm", "run", "start"]
