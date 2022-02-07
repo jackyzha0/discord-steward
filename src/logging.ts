@@ -1,4 +1,4 @@
-import {SimpleCommandMessage} from "discordx"
+import {MethodDecoratorEx, SimpleCommandMessage} from "discordx"
 import logger from "pino"
 import pino from "pino"
 import {CommandInteraction, DMChannel, GuildBasedChannel, GuildMember} from "discord.js"

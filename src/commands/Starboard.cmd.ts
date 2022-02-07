@@ -42,6 +42,13 @@ class Starboard {
       const layers = Object.values(guildLayerMap(reaction.message.guild?.channels)).flat()
       const isHighSignal = (reaction.count || 0) === Math.ceil(1.3 * Math.sqrt(channelSize / 2))
 
+      LOG.trace({
+        type: "reaction",
+        isHighSignal,
+        sentChannel: sentChannel.id,
+        count: reaction.count,
+      })
+
       if (isHighSignal && layers.map(l => l.channel.id).includes(sentChannel.id)) {
         const sentLayer = layers.find(l => l.channel.id === sentChannel.id) as Layer
         const workflowLayers = layers

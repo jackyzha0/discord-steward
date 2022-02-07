@@ -9,7 +9,7 @@ const LOG = newLogger('Misc')
 @SlashGroup("steward", "Miscellaneous commands for managing Steward")
 class Misc {
   @Slash("reset", { description: "Recreates all roles and permissions. Only administrators can perform this command" })
-  async reset(interaction: CommandInteraction): Promise<unknown> {
+    async reset(interaction: CommandInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
     traceCommand(LOG, interaction)
 
@@ -42,7 +42,7 @@ class Misc {
   }
 
   @Slash("help", { description: "Details on how to get started with Steward" })
-  async help(interaction: CommandInteraction): Promise<unknown> {
+    async help(interaction: CommandInteraction): Promise<unknown> {
     await interaction.deferReply()
     traceCommand(LOG, interaction)
 

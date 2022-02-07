@@ -16,7 +16,7 @@ const LOG = newLogger('Pace')
 @SlashGroup("pace", "Manage the pace of your involvement with various workflows")
 class Pace {
   @Slash("list", { description: "See current pace for workflows" })
-  async list(interaction: CommandInteraction): Promise<unknown> {
+    async list(interaction: CommandInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
     await fixRolesAndPermissions(interaction)
     traceCommand(LOG, interaction)
@@ -66,7 +66,7 @@ class Pace {
   }
 
   @SelectMenuComponent("pace-workflow-menu")
-  async handlePaceRoleSelection(interaction: SelectMenuInteraction): Promise<unknown> {
+    async handlePaceRoleSelection(interaction: SelectMenuInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
     await fixRolesAndPermissions(interaction)
 
@@ -95,7 +95,7 @@ class Pace {
   }
 
   @SelectMenuComponent("pace-select-menu")
-  async handlePaceSelection(interaction: SelectMenuInteraction): Promise<unknown> {
+    async handlePaceSelection(interaction: SelectMenuInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
     const selectedPaceValue = interaction.values[0]
 
@@ -122,7 +122,7 @@ class Pace {
   }
 
   @Slash("set", { description: "Set current pace layer for a workflow" })
-  async set(interaction: CommandInteraction): Promise<unknown> {
+    async set(interaction: CommandInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
     await fixRolesAndPermissions(interaction)
     traceCommand(LOG, interaction)

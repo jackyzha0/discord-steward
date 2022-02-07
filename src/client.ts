@@ -1,7 +1,7 @@
 import "dotenv/config"
 import "reflect-metadata"
 import path from "path"
-import { Intents, Interaction, Message } from "discord.js"
+import {CommandInteraction, Intents, Interaction, Message} from "discord.js"
 import { Client } from "discordx"
 import { importx } from "@discordx/importer"
 import {LOG} from "./logging"
@@ -31,15 +31,16 @@ client.once("ready", async () => {
 })
 
 client.on("interactionCreate", (interaction: Interaction) => {
-  try {
-    client.executeInteraction(interaction)
-  } catch (err) {
-    LOG.error(err)
-  }
+  (client.executeInteraction(interaction) as Promise<any>).catch(err => {
+    (interaction as CommandInteraction).editReply({content: "⚠️ Uh-oh! We encountered a permission error, please let your server admin know."})
+    return LOG.error(err)
+  })
 })
 
 client.on("messageCreate", (message: Message) => {
-  client.executeCommand(message).catch(err => LOG.error(err))
+  client.executeCommand(message).catch(err => {
+    return LOG.error(err)
+  })
 })
 
 async function run() {

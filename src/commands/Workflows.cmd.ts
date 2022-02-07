@@ -45,7 +45,7 @@ class WorkflowsGroup {
   }
 
   @SelectMenuComponent("join-role-menu")
-  async handleJoin(interaction: SelectMenuInteraction): Promise<unknown> {
+    async handleJoin(interaction: SelectMenuInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
     await fixRolesAndPermissions(interaction)
 
@@ -72,7 +72,7 @@ class WorkflowsGroup {
   }
 
   @SelectMenuComponent("leave-role-menu")
-  async handleLeave(interaction: SelectMenuInteraction): Promise<unknown> {
+    async handleLeave(interaction: SelectMenuInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
     await fixRolesAndPermissions(interaction)
 
@@ -89,7 +89,7 @@ class WorkflowsGroup {
   }
 
   @Slash("list", { description: "Show all workflows/projects" })
-  async list(interaction: CommandInteraction): Promise<unknown> {
+    async list(interaction: CommandInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
     await fixRolesAndPermissions(interaction)
     traceCommand(LOG, interaction)
@@ -119,7 +119,7 @@ class WorkflowsGroup {
   }
 
   @Slash("join", { description: "Subscribe to new workflows/projects" })
-  async join(interaction: CommandInteraction): Promise<unknown> {
+    async join(interaction: CommandInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
     traceCommand(LOG, interaction)
     const menu = this.createRoleSelectMenu(interaction, "join")
@@ -131,7 +131,7 @@ class WorkflowsGroup {
   }
 
   @Slash("leave", { description: "Unsubscribe from existing workflows/projects" })
-  async leave(interaction: CommandInteraction): Promise<unknown> {
+    async leave(interaction: CommandInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
     traceCommand(LOG, interaction)
 
