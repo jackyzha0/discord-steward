@@ -24,7 +24,7 @@ export interface Layer {
   depth: number
   channel: GuildBasedChannel
   roleName: string
-  workflowName: string | undefined
+  feedName: string | undefined
 }
 
 export function serverChannels(interaction: CommandInteraction | SelectMenuInteraction) {
@@ -52,7 +52,7 @@ export function guildLayerMap(channels: GuildChannelManager | undefined) {
             depth: parseInt(depthString),
             channel: cur,
             roleName: `${parentRoleName} P${depthString}`,
-            workflowName: parentRoleName,
+            feedName: parentRoleName,
           })
           total[id] = total[id].sort((a, b) => a.depth - b.depth)
         }
@@ -65,7 +65,7 @@ export function getLayerMap(interaction: CommandInteraction | SelectMenuInteract
   return guildLayerMap(interaction.guild?.channels)
 }
 
-export function getWorkflowChannels(interaction: CommandInteraction | SelectMenuInteraction) {
+export function getFeedChannels(interaction: CommandInteraction | SelectMenuInteraction) {
   const channels = serverChannels(interaction)
   return channels
     .filter(c => c.type === "GUILD_CATEGORY")
@@ -78,7 +78,7 @@ export async function fixRolesAndPermissions(interaction: SelectMenuInteraction 
   const layerRoles = Object.values(layerMap)
     .flat()
     .map(l => ({
-      color: colorHash.hex(l.workflowName || ""),
+      color: colorHash.hex(l.feedName || ""),
       name: l.roleName
     }))
 
@@ -94,7 +94,7 @@ export async function fixRolesAndPermissions(interaction: SelectMenuInteraction 
     .map(role => interaction.guild?.roles.create({
       name: role.name,
       color: role.color as ColorResolvable,
-      reason: "Steward workflow role creation",
+      reason: "Steward feed role creation",
     })))
   LOG.info({
     event: `created ${rolesToMake.length} missing roles`,
@@ -106,19 +106,19 @@ export async function fixRolesAndPermissions(interaction: SelectMenuInteraction 
   const getRoleByName = (name: string) => roles.find(r => r.name === name) as Role
   const botRole = getRoleByName("Steward")
 
-  // bind workflow channels to roles
+  // bind feed channels to roles
   const channels = serverChannels(interaction)
   const findChannelById = (id: string) => channels.find(c => c.id === id) as GuildChannel
-  Object.keys(layerMap).forEach(workflowCategoryId => {
+  Object.keys(layerMap).forEach(feedCategoryId => {
     // by default, hide from all, allow bot to view
-    const cat = findChannelById(workflowCategoryId)
+    const cat = findChannelById(feedCategoryId)
     cat.permissionOverwrites.create(botRole, { VIEW_CHANNEL: true })
 
     if (isWorkFlow(cat)) {
       cat.permissionOverwrites.create(cat.guild.roles.everyone, { VIEW_CHANNEL: false })
 
       // cascade depth role permissions
-      const layers = layerMap[workflowCategoryId]
+      const layers = layerMap[feedCategoryId]
       layers.forEach(l => {
         const layerRole = getRoleByName(l.roleName)
 

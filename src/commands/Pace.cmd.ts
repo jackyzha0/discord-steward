@@ -8,14 +8,14 @@ import {
   MessageSelectMenu, Role,
   SelectMenuInteraction
 } from "discord.js"
-import {channelToRole, fixRolesAndPermissions, getLayerMap, getWorkflowChannels, serverRoles} from "./roleUtils"
+import {channelToRole, fixRolesAndPermissions, getLayerMap, getFeedChannels, serverRoles} from "./roleUtils"
 
 const LOG = newLogger('Pace')
 
 @Discord()
-@SlashGroup("pace", "Manage the pace of your involvement with various workflows")
+@SlashGroup("pace", "Manage the pace of your involvement with various feeds")
 class Pace {
-  @Slash("list", { description: "See current pace for workflows" })
+  @Slash("list", { description: "See current pace for feeds" })
     async list(interaction: CommandInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
     await fixRolesAndPermissions(interaction)
@@ -27,45 +27,45 @@ class Pace {
     const associatedLayers = layers.filter(l => roleNames.includes(l.roleName))
 
     const layout = associatedLayers.map(l => {
-      const allOtherLayersInWorkflow = layers
-        .filter(al => al.workflowName === l.workflowName && al.depth <= l.depth)
+      const allOtherLayersInFeed = layers
+        .filter(al => al.feedName === l.feedName && al.depth <= l.depth)
         .sort((a, b) => a.depth - b.depth)
         .map((l, i) => `  ${i + 1}. ${l.roleName}: ${l.channel}`)
 
       return ({
-        name: l.workflowName + `, Pace Layer ${l.depth}`,
+        name: l.feedName + `, Pace Layer ${l.depth}`,
         value: `**Channels**
-        ${allOtherLayersInWorkflow.join("\n")}`
+        ${allOtherLayersInFeed.join("\n")}`
       })
     })
 
     const description = associatedLayers.length === 0 ?
-      "❌ Didn't find any associated workflows. Try joining some first using \`/workflows join\`" :
-      `✨ Found ${associatedLayers.length} associated workflows. Use \`/pace set\` to adjust these!\n\nChannels are organized from low frequency important messages to high frequency day-to-day messages`
+      "❌ Didn't find any associated feeds. Try joining some first using \`/feeds join\`" :
+      `✨ Found ${associatedLayers.length} associated feeds. Use \`/pace set\` to adjust these!\n\nChannels are organized from low frequency important messages to high frequency day-to-day messages`
     const embed = new MessageEmbed()
       .setColor('#B5936E')
       .setDescription(description)
       .setFields(layout)
-      .setFooter({text: "___\nLayers are ordered in terms of 'pace' or message flow. Lower layer number means more frequent and noisy updates, whereas higher layer numbers are less frequent and higher signal information."})
+      .setFooter({text: "___\nLayers are ordered in terms of 'pace' or message flow. Higher layer number means more frequent and noisy updates, whereas lower layer numbers are less frequent and higher signal information."})
 
     return interaction.editReply({ embeds: [embed] })
   }
 
-  createWorkflowSelectionMenu(interaction: CommandInteraction) {
+  createFeedSelectionMenu(interaction: CommandInteraction) {
     const userRoles = interaction.member?.roles as GuildMemberRoleManager
-    const workflowRoles = getWorkflowChannels(interaction).map(c => channelToRole(c.name) || "")
-    const paceRoles = [...userRoles.cache.values()].filter(r => workflowRoles.some(wf => r.name.startsWith(wf))).map(r => ({
+    const feedRoles = getFeedChannels(interaction).map(c => channelToRole(c.name) || "")
+    const paceRoles = [...userRoles.cache.values()].filter(r => feedRoles.some(wf => r.name.startsWith(wf))).map(r => ({
       label: r.name.replace(/ P\d+$/, ""),
       value: r.name.replace(/ P\d+$/, "")
     }))
     const roleSelection = new MessageSelectMenu()
       .addOptions(paceRoles)
-      .setPlaceholder('Select workflow to adjust pace layer for')
-      .setCustomId("pace-workflow-menu")
+      .setPlaceholder('Select feed to adjust pace layer for')
+      .setCustomId("pace-feed-menu")
     return new MessageActionRow().addComponents(roleSelection)
   }
 
-  @SelectMenuComponent("pace-workflow-menu")
+  @SelectMenuComponent("pace-feed-menu")
     async handlePaceRoleSelection(interaction: SelectMenuInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
     await fixRolesAndPermissions(interaction)
@@ -74,22 +74,22 @@ class Pace {
     const menu = this.createPaceSelectionMenu(interaction, selectedRoleValue)
 
     return interaction.followUp({
-      content: "⏳ Select pace layer. Lower layer number means more frequent and noisy updates, whereas higher layer numbers are less frequent and higher signal information.",
+      content: "⏳ Select pace layer. Higher layer number means more frequent and noisy updates, whereas lower layer numbers are less frequent and higher signal information.",
       components: [menu],
     })
   }
 
-  createPaceSelectionMenu(interaction: SelectMenuInteraction, workflowName: string) {
+  createPaceSelectionMenu(interaction: SelectMenuInteraction, feedName: string) {
     const layers = Object.values(getLayerMap(interaction)).flat()
     const associatedRoles = layers
-      .filter(l => l.workflowName === workflowName)
+      .filter(l => l.feedName === feedName)
       .map(l => ({
         label: `Pace Layer ${l.depth}`,
         value: l.roleName
       }))
     const roleSelection = new MessageSelectMenu()
       .addOptions(associatedRoles)
-      .setPlaceholder(`Select pace layer for ${workflowName}`)
+      .setPlaceholder(`Select pace layer for ${feedName}`)
       .setCustomId("pace-select-menu")
     return new MessageActionRow().addComponents(roleSelection)
   }
@@ -99,9 +99,9 @@ class Pace {
     await interaction.deferReply({ ephemeral: true })
     const selectedPaceValue = interaction.values[0]
 
-    const workflowName = selectedPaceValue.replace(/ P\d+$/, "")
+    const feedName = selectedPaceValue.replace(/ P\d+$/, "")
     const userRoles = interaction.member?.roles as GuildMemberRoleManager
-    const oldPaceValue = [...userRoles.cache.values()].find(r => r.name.startsWith(workflowName))?.name || ""
+    const oldPaceValue = [...userRoles.cache.values()].find(r => r.name.startsWith(feedName))?.name || ""
     const allRoles = serverRoles(interaction)
 
     const extractDepth = (paceValue: string) => paceValue.match(/P(\d+)/)?.[1]
@@ -118,19 +118,19 @@ class Pace {
     const newRole = allRoles.find(r => r.name === selectedPaceValue) as Role
     await userRoles.add(newRole)
     await userRoles.remove(oldRole)
-    return interaction.followUp(`${newDepth > oldDepth ? "🐇 Upped" : "🐢 Lowered"} your pace layer for ${workflowName} from ${oldRole} to ${newRole}!`)
+    return interaction.followUp(`${newDepth > oldDepth ? "🐇 Upped" : "🐢 Lowered"} your pace layer for ${feedName} from ${oldRole} to ${newRole}!`)
   }
 
-  @Slash("set", { description: "Set current pace layer for a workflow" })
+  @Slash("set", { description: "Set current pace layer for a feed" })
     async set(interaction: CommandInteraction): Promise<unknown> {
     await interaction.deferReply({ ephemeral: true })
     await fixRolesAndPermissions(interaction)
     traceCommand(LOG, interaction)
 
-    const menu = this.createWorkflowSelectionMenu(interaction)
+    const menu = this.createFeedSelectionMenu(interaction)
 
     return interaction.editReply({
-      content: "⏳ Select workflow to adjust pace layer",
+      content: "⏳ Select feed to adjust pace layer",
       components: [menu],
     })
   }

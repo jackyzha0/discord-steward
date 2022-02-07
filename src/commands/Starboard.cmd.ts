@@ -51,13 +51,13 @@ class Starboard {
 
       if (isHighSignal && layers.map(l => l.channel.id).includes(sentChannel.id)) {
         const sentLayer = layers.find(l => l.channel.id === sentChannel.id) as Layer
-        const workflowLayers = layers
-          .filter(l => l.workflowName === sentLayer.workflowName)
+        const feedLayers = layers
+          .filter(l => l.feedName === sentLayer.feedName)
           .sort((a, b) => a.depth - b.depth)
 
         // fn to get index of chan id
         const indexOfChan = (chan: GuildChannel) => {
-          return workflowLayers.findIndex(l => l.channel.id === chan.id)
+          return feedLayers.findIndex(l => l.channel.id === chan.id)
         }
 
         // check if already at top
@@ -78,7 +78,7 @@ class Starboard {
         })
 
         // otherwise, repost in higher level
-        const channelToSend = workflowLayers[indexOfChan(sentChannel) - 1].channel as TextBasedChannel
+        const channelToSend = feedLayers[indexOfChan(sentChannel) - 1].channel as TextBasedChannel
         const embed = this.constructStarboardEmbed(reaction as MessageReaction, sentLayer)
         await channelToSend.send({embeds: [embed]})
       }

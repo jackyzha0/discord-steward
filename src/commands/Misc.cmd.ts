@@ -21,14 +21,14 @@ class Misc {
       })
     }
 
-    // delete all workflow roles
+    // delete all feed roles
     const role = serverRoles(interaction)
-    const workflowRoles = role.filter(r => r.name.match(/ P\d+$/))
-    await Promise.all(workflowRoles.map(role => role.delete()))
+    const feedRoles = role.filter(r => r.name.match(/ P\d+$/))
+    await Promise.all(feedRoles.map(role => role.delete()))
 
     LOG.warn({
-      event: `deleted ${workflowRoles.length} roles`,
-      rolesDeleted: workflowRoles
+      event: `deleted ${feedRoles.length} roles`,
+      rolesDeleted: feedRoles
     })
 
     // recreate
@@ -36,7 +36,7 @@ class Misc {
 
     const embed = new MessageEmbed()
       .setColor('#9c4630')
-      .setDescription(`🧨 Nuked ${workflowRoles.length} roles. Recreated ${madeRoles?.length} roles.`)
+      .setDescription(`🧨 Nuked ${feedRoles.length} roles. Recreated ${madeRoles?.length} roles.`)
 
     return interaction.editReply({ embeds: [embed] })
   }
@@ -51,11 +51,11 @@ class Misc {
       .setTitle("Steward Help Page")
       .setDescription('Stream interfaces like Discord and Slack basically create a single global timeline that moves at a certain rate. If you miss a certain conversation, it flows away. ' +
         'Someone once described Slack as the online version of the open office arrangement – it puts the pressure of everything being visible all the time to everybody on the individual. ' +
-        'Steward is an attempt to give back agency to users to control the speed of information in the projects they are a part of.')
+        'Steward is an attempt to give back agency to users to control the speed of information in the feeds they are a part of.')
       .addFields(
         { name: 'Get Started', value: `
-        - See what workflows are available using \`/workflows list\`
-        - Join a workflow using \`/workflows join\`
+        - See what feeds are available using \`/feeds list\`
+        - Join a feed using \`/feeds join\`
         - Set your pace level using \`/pace set\`
         - React to messages using ✨. This is referred to as 'democratic pinning' where messages that surpass a number of reactions get boosted up a pace layer.
         ` },
