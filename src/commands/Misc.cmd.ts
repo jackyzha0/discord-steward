@@ -1,7 +1,7 @@
 import {Discord, Slash, SlashGroup} from "discordx"
 import {CommandInteraction, GuildMember, MessageEmbed, Permissions} from "discord.js"
 import {newLogger, traceCommand} from "../logging"
-import {fixRolesAndPermissions, getPaceRoleDepth, getServerRoles} from "./roleUtils"
+import {fixRolesAndPermissions, getPaceRoleDepth, getServerRoles, setLayerProperties} from "./roleUtils"
 
 const LOG = newLogger('Misc')
 
@@ -42,8 +42,26 @@ class Misc {
     }
   }
 
+  @Slash("refresh", { description: "Rebind roles to channels. You should only call this command if something is broken" })
+  async refresh(interaction: CommandInteraction): Promise<unknown> {
+    await interaction.deferReply()
+    traceCommand(LOG, interaction)
+
+    const embed = new MessageEmbed()
+      .setColor('#9c4630')
+
+    if (interaction.guild) {
+      await setLayerProperties(interaction.guild)
+      embed.setDescription("Successfully re-binded roles.")
+      return interaction.editReply({ embeds: [embed] })
+    } else {
+      embed.setDescription("Please run this command in a server")
+      return interaction.editReply({ embeds: [embed] })
+    }
+  }
+
   @Slash("help", { description: "Details on how to get started with Steward" })
-    async help(interaction: CommandInteraction): Promise<unknown> {
+  async help(interaction: CommandInteraction): Promise<unknown> {
     await interaction.deferReply()
     traceCommand(LOG, interaction)
 

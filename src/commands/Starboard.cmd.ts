@@ -42,6 +42,8 @@ class Starboard {
         const sentChannel = reaction.message.channel as GuildChannel
         const channelSize = sentChannel.members.size
         const layers = Object.values(getLayerMap(guild)).flat()
+
+        // f(x) = ceil(1.3*sqrt(x/2))
         const isHighSignal = (reaction.count || 0) === Math.ceil(1.3 * Math.sqrt(channelSize / 2))
 
         LOG.trace({
