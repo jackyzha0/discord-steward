@@ -31,56 +31,59 @@ class Starboard {
   async onReact(
     [reaction]: ArgsOf<"messageReactionAdd">, // Type message automatically
   ) {
-    const isSparkle = reaction.emoji.name === "✨"
-    if (isSparkle) {
-      if (reaction.partial) {
-        await reaction.fetch()
-      }
-
-      const sentChannel = reaction.message.channel as GuildChannel
-      const channelSize = sentChannel.members.size
-      const layers = Object.values(getLayerMap(reaction.message.guild?.channels)).flat()
-      const isHighSignal = (reaction.count || 0) === Math.ceil(1.3 * Math.sqrt(channelSize / 2))
-
-      LOG.trace({
-        type: "reaction",
-        isHighSignal,
-        sentChannel: sentChannel.id,
-        count: reaction.count,
-      })
-
-      if (isHighSignal && layers.map(l => l.channel.id).includes(sentChannel.id)) {
-        const sentLayer = layers.find(l => l.channel.id === sentChannel.id) as Layer
-        const feedLayers = layers
-          .filter(l => l.feedName === sentLayer.feedName)
-          .sort((a, b) => a.depth - b.depth)
-
-        // fn to get index of chan id
-        const indexOfChan = (chan: GuildChannel) => {
-          return feedLayers.findIndex(l => l.channel.id === chan.id)
+    const guild = reaction.message.guild
+    if (guild) {
+      const isSparkle = reaction.emoji.name === "✨"
+      if (isSparkle) {
+        if (reaction.partial) {
+          await reaction.fetch()
         }
 
-        // check if already at top
-        if (indexOfChan(sentChannel) === 0) {
-          // do nothing, early return
-          return
-        }
+        const sentChannel = reaction.message.channel as GuildChannel
+        const channelSize = sentChannel.members.size
+        const layers = Object.values(getLayerMap(guild)).flat()
+        const isHighSignal = (reaction.count || 0) === Math.ceil(1.3 * Math.sqrt(channelSize / 2))
 
-        LOG.info({
-          user: reaction.message.member?.id,
-          reactionCount: reaction.count,
-          channelSize: channelSize,
-          guildName: reaction.message.guild?.name || "Guild name unknown",
-          guildId: reaction.message.guildId,
-          channelName: sentChannel.name,
-          channelId: sentChannel.id,
-          timestamp: reaction.message.createdTimestamp
+        LOG.trace({
+          type: "reaction",
+          isHighSignal,
+          sentChannel: sentChannel.id,
+          count: reaction.count,
         })
 
-        // otherwise, repost in higher level
-        const channelToSend = feedLayers[indexOfChan(sentChannel) - 1].channel as TextBasedChannel
-        const embed = this.constructStarboardEmbed(reaction as MessageReaction, sentLayer)
-        await channelToSend.send({embeds: [embed]})
+        if (isHighSignal && layers.map(l => l.channel.id).includes(sentChannel.id)) {
+          const sentLayer = layers.find(l => l.channel.id === sentChannel.id) as Layer
+          const feedLayers = layers
+            .filter(l => l.feedName === sentLayer.feedName)
+            .sort((a, b) => a.depth - b.depth)
+
+          // fn to get index of chan id
+          const indexOfChan = (chan: GuildChannel) => {
+            return feedLayers.findIndex(l => l.channel.id === chan.id)
+          }
+
+          // check if already at top
+          if (indexOfChan(sentChannel) === 0) {
+            // do nothing, early return
+            return
+          }
+
+          LOG.info({
+            user: reaction.message.member?.id,
+            reactionCount: reaction.count,
+            channelSize: channelSize,
+            guildName: reaction.message.guild?.name || "Guild name unknown",
+            guildId: reaction.message.guildId,
+            channelName: sentChannel.name,
+            channelId: sentChannel.id,
+            timestamp: reaction.message.createdTimestamp
+          })
+
+          // otherwise, repost in higher level
+          const channelToSend = feedLayers[indexOfChan(sentChannel) - 1].channel as TextBasedChannel
+          const embed = this.constructStarboardEmbed(reaction as MessageReaction, sentLayer)
+          await channelToSend.send({embeds: [embed]})
+        }
       }
     }
   }

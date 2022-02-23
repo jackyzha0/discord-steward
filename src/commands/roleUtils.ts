@@ -22,9 +22,13 @@ export function getPaceChannelDepth(c: GuildBasedChannel | GuildChannel | null):
   return parsedString ? parseInt(parsedString) : false
 }
 
-export function getPaceRoleDepth(r: Role): false | number {
-  const parsedString = r.name.match(/ P(\d+)$/)?.[1]
+export function getPaceRoleDepthFromString(sr: string): false | number {
+  const parsedString = sr.match(/ P(\d+)$/)?.[1]
   return parsedString ? parseInt(parsedString) : false
+}
+
+export function getPaceRoleDepth(r: Role): false | number {
+  return getPaceRoleDepthFromString(r.name)
 }
 
 export function isWorkFlow(c: GuildBasedChannel | GuildChannel | null): boolean {

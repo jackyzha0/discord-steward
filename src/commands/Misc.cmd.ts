@@ -1,7 +1,7 @@
 import {Discord, Slash, SlashGroup} from "discordx"
 import {CommandInteraction, GuildMember, MessageEmbed, Permissions} from "discord.js"
 import {newLogger, traceCommand} from "../logging"
-import {fixRolesAndPermissions, getServerRoles} from "./roleUtils"
+import {fixRolesAndPermissions, getPaceRoleDepth, getServerRoles} from "./roleUtils"
 
 const LOG = newLogger('Misc')
 
@@ -9,36 +9,37 @@ const LOG = newLogger('Misc')
 @SlashGroup("steward", "Miscellaneous commands for managing Steward")
 class Misc {
   @Slash("reset", { description: "Recreates all roles and permissions. Only administrators can perform this command" })
-    async reset(interaction: CommandInteraction): Promise<unknown> {
-    await interaction.deferReply({ ephemeral: true })
-    traceCommand(LOG, interaction)
+  async reset(interaction: CommandInteraction): Promise<unknown> {
+    if (interaction.guild && interaction.member) {
+      await interaction.deferReply({ ephemeral: true })
+      traceCommand(LOG, interaction)
 
-    // check for appropriate permissions
-    const guildMember = interaction.member as GuildMember
-    if (!guildMember.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
-      return interaction.editReply({
-        content: "❌ You must be an administrator to perform this command",
+      // check for appropriate permissions
+      const guildMember = interaction.member as GuildMember
+      if (!guildMember.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
+        return interaction.editReply({
+          content: "❌ You must be an administrator to perform this command",
+        })
+      }
+
+      // delete all feed roles
+      const role = getServerRoles(interaction.guild)
+      const feedRoles = role.filter(getPaceRoleDepth) // only keep valid pace roles
+      await Promise.all(feedRoles.map(role => role.delete()))
+      LOG.warn({
+        event: `deleted ${feedRoles.length} roles`,
+        rolesDeleted: feedRoles
       })
+
+      // recreate
+      const madeRoles = await fixRolesAndPermissions(interaction.guild, true)
+
+      const embed = new MessageEmbed()
+        .setColor('#9c4630')
+        .setDescription(`🧨 Nuked ${feedRoles.length} roles. Recreated ${madeRoles?.length} roles.`)
+
+      return interaction.editReply({ embeds: [embed] })
     }
-
-    // delete all feed roles
-    const role = getServerRoles(interaction)
-    const feedRoles = role.filter(r => r.name.match(/ P\d+$/))
-    await Promise.all(feedRoles.map(role => role.delete()))
-
-    LOG.warn({
-      event: `deleted ${feedRoles.length} roles`,
-      rolesDeleted: feedRoles
-    })
-
-    // recreate
-    const madeRoles = await fixRolesAndPermissions(interaction, true)
-
-    const embed = new MessageEmbed()
-      .setColor('#9c4630')
-      .setDescription(`🧨 Nuked ${feedRoles.length} roles. Recreated ${madeRoles?.length} roles.`)
-
-    return interaction.editReply({ embeds: [embed] })
   }
 
   @Slash("help", { description: "Details on how to get started with Steward" })
