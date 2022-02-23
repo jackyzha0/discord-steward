@@ -24,7 +24,7 @@ class Misc {
 
       // delete all feed roles
       const role = getServerRoles(interaction.guild)
-      const feedRoles = role.filter(getPaceRoleDepth) // only keep valid pace roles
+      const feedRoles = role.filter(r => getPaceRoleDepth(r) !== false) // only keep valid pace roles
       await Promise.all(feedRoles.map(role => role.delete()))
       LOG.warn({
         event: `deleted ${feedRoles.length} roles`,

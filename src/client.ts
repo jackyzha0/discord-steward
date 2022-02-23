@@ -5,7 +5,7 @@ import {ColorResolvable, CommandInteraction, Intents, Interaction, Message} from
 import { Client } from "discordx"
 import { importx } from "@discordx/importer"
 import {LOG} from "./logging"
-import {Koa} from "@discordx/koa";
+import {Koa} from "@discordx/koa"
 import {
   channelToRole,
   colorHash,
@@ -13,9 +13,7 @@ import {
   getP0Roles,
   getServerRoles,
   setLayerProperties
-} from "./commands/roleUtils";
-
-
+} from "./commands/roleUtils"
 
 const client = new Client({
   intents: [
@@ -38,18 +36,24 @@ client.once("ready", async () => {
   LOG.info("Steward started up correctly.")
 })
 
+function dumpError(err: unknown) {
+  const obj = JSON.parse(JSON.stringify(err, Object.getOwnPropertyNames(err)))
+  obj.stack = obj.stack.split("\n    ")
+  return obj
+}
+
 // listen for reactions/button clicks
 client.on("interactionCreate", (interaction: Interaction) => {
   (client.executeInteraction(interaction) as Promise<any>).catch(err => {
     (interaction as CommandInteraction).editReply({content: "⚠️ Uh-oh! We encountered a permission error, please let your server admin know."})
-    return LOG.error(Object.assign({}, err))
+    return LOG.error(dumpError(err))
   })
 })
 
 // listen for slash commands
 client.on("messageCreate", (message: Message) => {
   client.executeCommand(message).catch(err => {
-    return LOG.error(Object.assign({}, err))
+    return LOG.error(dumpError(err))
   })
 })
 

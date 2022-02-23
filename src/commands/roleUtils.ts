@@ -1,12 +1,10 @@
 import ColorHash from "color-hash-ts"
 import {
-  BaseGuildTextChannel,
   ColorResolvable,
-  CommandInteraction, Guild,
+  Guild,
   GuildBasedChannel,
-  GuildChannel, GuildChannelManager, GuildMemberRoleManager,
-  Role,
-  SelectMenuInteraction, TextChannel
+  GuildChannel,
+  Role, TextChannel
 } from "discord.js"
 import {newLogger} from "../logging"
 
@@ -107,7 +105,7 @@ export async function fixRolesAndPermissions(g: Guild, force = false) {
   let roles = getServerRoles(g)
 
   // nuke old roles
-  const rolesToDelete = roles.filter(r => getPaceRoleDepth(r))
+  const rolesToDelete = roles.filter(r => getPaceRoleDepth(r) !== false)
   await Promise.all(rolesToDelete.map(r => r.delete()))
 
   LOG.info({
@@ -159,7 +157,7 @@ export async function fixRolesAndPermissions(g: Guild, force = false) {
 export async function setLayerProperties(g: Guild) {
   const roles = getServerRoles(g)
   const layerMap = getLayerMap(g)
-  const botRole = getRoleByName(roles, "Steward")
+  const botRole = getRoleByName(roles, process.env.ENV === "prod" ? "Steward" : "Steward Local")
 
   // get guild + layer map
   const channels = getServerChannels(g)
