@@ -7,7 +7,7 @@ import { importx } from "@discordx/importer"
 import {LOG} from "./logging"
 import {Koa} from "@discordx/koa"
 import {
-  channelToRole,
+  categoryNameToRole,
   colorHash,
   getLayerMap,
   getP0Roles,
@@ -66,17 +66,19 @@ client.on("channelCreate", async chan => {
     channelId: chan.id,
     channel: chan.name,
   })
-  const roleName = channelToRole(chan.name)
-  const layerMap = getLayerMap(chan.guild)
-  if (roleName && chan.parentId && layerMap[chan.parentId]) {
-    // create associated role
-    await chan.guild.roles.create({
-      color: colorHash.hex(chan.parent?.name || "") as ColorResolvable,
-      name: roleName
-    })
+  if (chan.parent) {
+    const roleName = categoryNameToRole(chan.parent.name)
+    const layerMap = getLayerMap(chan.guild)
+    if (roleName && chan.parentId && layerMap[chan.parentId]) {
+      // create associated role
+      await chan.guild.roles.create({
+        color: colorHash.hex(chan.parent.name || "") as ColorResolvable,
+        name: roleName
+      })
 
-    // set permissions + slowmode
-    await setLayerProperties(chan.guild)
+      // set permissions + slowmode
+      await setLayerProperties(chan.guild)
+    }
   }
 })
 
@@ -89,18 +91,20 @@ client.on("channelDelete", async chan => {
       channelId: chan.id,
       channel: chan.name,
     })
-    const roleName = channelToRole(chan.name)
-    const guild = chan.guild
-    if (roleName) {
-      const guildRoles = getServerRoles(guild)
-      await guildRoles.find(r => r.name === roleName)?.delete()
-      LOG.info({
-        event: "role deletion",
-        guild: chan.guild.name,
-        guildId: chan.guildId,
-        role: roleName
-      })
-      await setLayerProperties(guild)
+    if (chan.parent) {
+      const roleName = categoryNameToRole(chan.parent.name)
+      const guild = chan.guild
+      if (roleName) {
+        const guildRoles = getServerRoles(guild)
+        await guildRoles.find(r => r.name === roleName)?.delete()
+        LOG.info({
+          event: "role deletion",
+          guild: chan.guild.name,
+          guildId: chan.guildId,
+          role: roleName
+        })
+        await setLayerProperties(guild)
+      }
     }
   }
 })

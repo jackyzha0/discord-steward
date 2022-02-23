@@ -12,7 +12,7 @@ import {
   SelectMenuInteraction
 } from "discord.js"
 import {
-  channelToRole,
+  categoryNameToRole,
   fixRolesAndPermissions,
   getLayerMap,
   getFeedChannels, getServerRoles,
@@ -27,7 +27,7 @@ class FeedsGroup {
     if (interaction.guild && interaction.member) {
       const userRoles = interaction.member.roles as GuildMemberRoleManager
       const feedRoles = getFeedChannels(interaction.guild)
-        .map(c => channelToRole(c.name))
+        .map(c => categoryNameToRole(c.name))
         .filter(c => !!c) as string[]
       const roles = menuType === "join" ?
         feedRoles.map(c => ({ label: c, value: c }))

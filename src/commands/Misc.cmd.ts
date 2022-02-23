@@ -1,13 +1,36 @@
 import {Discord, Slash, SlashGroup} from "discordx"
 import {CommandInteraction, GuildMember, MessageEmbed, Permissions} from "discord.js"
 import {newLogger, traceCommand} from "../logging"
-import {fixRolesAndPermissions, getPaceRoleDepth, getServerRoles, setLayerProperties} from "./roleUtils"
+import {fixRolesAndPermissions, getPaceRoleDepth, getServerRoles, removeAllRoles, setLayerProperties} from "./roleUtils"
 
 const LOG = newLogger('Misc')
 
 @Discord()
 @SlashGroup("steward", "Miscellaneous commands for managing Steward")
 class Misc {
+  @Slash("clean", { description: "Remove all associated roles" })
+  async clean(interaction: CommandInteraction): Promise<unknown> {
+    if (interaction.guild && interaction.member) {
+      await interaction.deferReply({ ephemeral: true })
+      traceCommand(LOG, interaction)
+
+      // check for appropriate permissions
+      const guildMember = interaction.member as GuildMember
+      if (!guildMember.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
+        return interaction.editReply({
+          content: "❌ You must be an administrator to perform this command",
+        })
+      }
+
+      // delete all feed roles
+      const feedRoles = await removeAllRoles(interaction.guild)
+      const embed = new MessageEmbed()
+        .setColor('#9c4630')
+        .setDescription(`🧨 Nuked ${feedRoles.length} roles.`)
+      return interaction.editReply({ embeds: [embed] })
+    }
+  }
+
   @Slash("reset", { description: "Recreates all roles and permissions. Only administrators can perform this command" })
   async reset(interaction: CommandInteraction): Promise<unknown> {
     if (interaction.guild && interaction.member) {
@@ -23,13 +46,7 @@ class Misc {
       }
 
       // delete all feed roles
-      const role = getServerRoles(interaction.guild)
-      const feedRoles = role.filter(r => getPaceRoleDepth(r) !== false) // only keep valid pace roles
-      await Promise.all(feedRoles.map(role => role.delete()))
-      LOG.warn({
-        event: `deleted ${feedRoles.length} roles`,
-        rolesDeleted: feedRoles
-      })
+      const feedRoles = await removeAllRoles(interaction.guild)
 
       // recreate
       const madeRoles = await fixRolesAndPermissions(interaction.guild, true)

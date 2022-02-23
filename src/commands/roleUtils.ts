@@ -12,7 +12,7 @@ const LOG = newLogger('Util')
 
 export const colorHash = new ColorHash({ lightness: 0.6, saturation: 0.4 })
 
-export function channelToRole(channelName: string): string | undefined {
+export function categoryNameToRole(channelName: string): string | undefined {
   return /^🌿[-_\s]([\S\s-_]+)/g.exec(channelName)?.[1].replace(/[-_\s]/i, " ")
 }
 
@@ -35,7 +35,7 @@ export function isWorkFlow(c: GuildBasedChannel | GuildChannel | null): boolean 
 }
 
 function getRoleByName(roles: Role[], name: string) {
-  return roles.find(r => r.name === name) as Role
+  return roles.find(r => r.name === name) as Role | undefined
 }
 
 function channelToLayer(guild: Guild, chan: GuildChannel): Layer | undefined {
@@ -61,6 +61,10 @@ export function getServerMembers(g: Guild) {
   return [...g.members.cache.values() || []]
 }
 
+export function getBotRole(g: Guild) {
+  return getRoleByName(getServerRoles(g), process.env.ENV === "prod" ? "Steward" : "Steward Local")
+}
+
 export function getLayerMap(g: Guild) {
   const channels = g.channels
   if (!channels) {
@@ -72,8 +76,8 @@ export function getLayerMap(g: Guild) {
         total[cur.id] = []
       } else {
         const depth = getPaceChannelDepth(cur)
-        if (depth) {
-          const parentRoleName = channelToRole(cur.parent?.name || "")
+        if (depth !== false) {
+          const parentRoleName = categoryNameToRole(cur.parent?.name || "")
           const id = cur.parentId ?? ""
           total[id].push({
             depth,
@@ -109,7 +113,7 @@ export async function fixRolesAndPermissions(g: Guild, force = false) {
   await Promise.all(rolesToDelete.map(r => r.delete()))
 
   LOG.info({
-    event: `deleted ${rolesToDelete.length} missing roles`,
+    event: `deleted ${rolesToDelete.length} roles`,
     rolesDeleted: rolesToDelete
   })
 
@@ -142,7 +146,7 @@ export async function fixRolesAndPermissions(g: Guild, force = false) {
 
   // assign p0 roles to everyone
   const p0Roles = getP0Roles(g)
-  const allMembers = getServerMembers(g)
+  const allMembers = getServerMembers(g).filter(p => !p.user.bot)
   await Promise.all(allMembers.map(member => member.roles.add(p0Roles)))
   LOG.info({
     event: `Added ${p0Roles.length} P0 roles to all users: ${p0Roles.map(r => r.name).join(", ")}`,
@@ -157,7 +161,10 @@ export async function fixRolesAndPermissions(g: Guild, force = false) {
 export async function setLayerProperties(g: Guild) {
   const roles = getServerRoles(g)
   const layerMap = getLayerMap(g)
-  const botRole = getRoleByName(roles, process.env.ENV === "prod" ? "Steward" : "Steward Local")
+  const botRole = getBotRole(g)
+  if (!botRole) {
+    return 0
+  }
 
   // get guild + layer map
   const channels = getServerChannels(g)
@@ -175,20 +182,21 @@ export async function setLayerProperties(g: Guild) {
       const layers = layerMap[feedCategoryId]
       layers.forEach(l => {
         const layerRole = getRoleByName(roles, l.roleName)
+        if (layerRole) {
+          // get all depths below current depth
+          const viewableLayers = layers.filter(pl => pl.depth <= l.depth)
+          viewableLayers.forEach(vl => {
+            // set permissions
+            const chan = vl.channel as TextChannel
+            chan.permissionOverwrites.create(layerRole, { VIEW_CHANNEL: true })
 
-        // get all depths below current depth
-        const viewableLayers = layers.filter(pl => pl.depth <= l.depth)
-        viewableLayers.forEach(vl => {
-          // set permissions
-          const chan = vl.channel as TextChannel
-          chan.permissionOverwrites.create(layerRole, { VIEW_CHANNEL: true })
-
-          // set slow mode
-          // f(x) = 4^(-x)
-          const messageFrequencySeconds = Math.floor(60 * 60 * Math.pow(4, -vl.depth))
-          chan.setRateLimitPerUser(messageFrequencySeconds, "Adjusting slow-mode for pace layer")
-          channelsModified++
-        })
+            // set slow mode
+            // f(x) = 4^(-x)
+            const messageFrequencySeconds = Math.floor(60 * 60 * Math.pow(4, -vl.depth))
+            chan.setRateLimitPerUser(messageFrequencySeconds, "Adjusting slow-mode for pace layer")
+            channelsModified++
+          })
+        }
       })
     } else {
       await cat.permissionOverwrites.delete(cat.guild.roles.everyone)
@@ -202,4 +210,17 @@ export async function setLayerProperties(g: Guild) {
     guild: g.name,
     guildId: g.id
   })
+  return channelsModified
+}
+
+export async function removeAllRoles(g: Guild) {
+  // delete all feed roles
+  const role = getServerRoles(g)
+  const feedRoles = role.filter(r => getPaceRoleDepth(r) !== false) // only keep valid pace roles
+  await Promise.all(feedRoles.map(role => role.delete()))
+  LOG.warn({
+    event: `deleted ${feedRoles.length} roles`,
+    rolesDeleted: feedRoles
+  })
+  return feedRoles
 }

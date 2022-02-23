@@ -9,7 +9,7 @@ import {
   SelectMenuInteraction
 } from "discord.js"
 import {
-  channelToRole,
+  categoryNameToRole,
   fixRolesAndPermissions,
   getLayerMap,
   getFeedChannels,
@@ -63,7 +63,7 @@ class Pace {
   createFeedSelectionMenu(interaction: CommandInteraction) {
     if (interaction.guild && interaction.member) {
       const userRoles = interaction.member.roles as GuildMemberRoleManager
-      const feedRoles = getFeedChannels(interaction.guild).map(c => channelToRole(c.name) || "")
+      const feedRoles = getFeedChannels(interaction.guild).map(c => categoryNameToRole(c.name) || "")
       const paceRoles = [...userRoles.cache.values()].filter(r => feedRoles.some(wf => r.name.startsWith(wf))).map(r => ({
         label: r.name.replace(/ P\d+$/, ""),
         value: r.name.replace(/ P\d+$/, "")
