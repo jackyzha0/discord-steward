@@ -1,11 +1,12 @@
 import "dotenv/config"
 import "reflect-metadata"
 import path from "path"
-import {CommandInteraction, Intents, Interaction, Message} from "discord.js"
+import {ColorResolvable, CommandInteraction, Intents, Interaction, Message} from "discord.js"
 import { Client } from "discordx"
 import { importx } from "@discordx/importer"
 import {LOG} from "./logging"
 import {Koa} from "@discordx/koa";
+import {getP0Roles} from "./commands/roleUtils";
 
 const client = new Client({
   intents: [
@@ -41,6 +42,14 @@ client.on("messageCreate", (message: Message) => {
   client.executeCommand(message).catch(err => {
     return LOG.error(err)
   })
+})
+
+// default roles
+client.on("guildMemberAdd", async member => {
+  const guild = member.guild
+  const rolesToAdd = getP0Roles(guild)
+  await member.roles.add(rolesToAdd)
+  LOG.info(`Added ${rolesToAdd.length} P0 roles to user ${member.displayName}: ${rolesToAdd.map(r => r.name).join(", ")}`)
 })
 
 async function run() {

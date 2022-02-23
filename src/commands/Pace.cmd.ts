@@ -8,7 +8,7 @@ import {
   MessageSelectMenu, Role,
   SelectMenuInteraction
 } from "discord.js"
-import {channelToRole, fixRolesAndPermissions, getLayerMap, getFeedChannels, serverRoles} from "./roleUtils"
+import {channelToRole, fixRolesAndPermissions, getLayerMap, getFeedChannels, getServerRoles} from "./roleUtils"
 
 const LOG = newLogger('Pace')
 
@@ -102,7 +102,7 @@ class Pace {
     const feedName = selectedPaceValue.replace(/ P\d+$/, "")
     const userRoles = interaction.member?.roles as GuildMemberRoleManager
     const oldPaceValue = [...userRoles.cache.values()].find(r => r.name.startsWith(feedName))?.name || ""
-    const allRoles = serverRoles(interaction)
+    const allRoles = getServerRoles(interaction)
 
     const extractDepth = (paceValue: string) => paceValue.match(/P(\d+)/)?.[1]
 

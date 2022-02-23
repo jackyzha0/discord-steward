@@ -1,6 +1,6 @@
 import {ArgsOf, Discord, On} from "discordx"
 import {GuildChannel, MessageEmbed, MessageReaction, TextBasedChannel} from "discord.js"
-import {guildLayerMap, Layer} from "./roleUtils";
+import {getLayerMap, Layer} from "./roleUtils";
 import {newLogger} from "../logging";
 
 const LOG = newLogger('Starboard')
@@ -39,7 +39,7 @@ class Starboard {
 
       const sentChannel = reaction.message.channel as GuildChannel
       const channelSize = sentChannel.members.size
-      const layers = Object.values(guildLayerMap(reaction.message.guild?.channels)).flat()
+      const layers = Object.values(getLayerMap(reaction.message.guild?.channels)).flat()
       const isHighSignal = (reaction.count || 0) === Math.ceil(1.3 * Math.sqrt(channelSize / 2))
 
       LOG.trace({

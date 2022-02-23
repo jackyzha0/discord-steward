@@ -1,7 +1,7 @@
 import {Discord, Slash, SlashGroup} from "discordx"
 import {CommandInteraction, GuildMember, MessageEmbed, Permissions} from "discord.js"
 import {newLogger, traceCommand} from "../logging"
-import {fixRolesAndPermissions, serverRoles} from "./roleUtils"
+import {fixRolesAndPermissions, getServerRoles} from "./roleUtils"
 
 const LOG = newLogger('Misc')
 
@@ -22,7 +22,7 @@ class Misc {
     }
 
     // delete all feed roles
-    const role = serverRoles(interaction)
+    const role = getServerRoles(interaction)
     const feedRoles = role.filter(r => r.name.match(/ P\d+$/))
     await Promise.all(feedRoles.map(role => role.delete()))
 

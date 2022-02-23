@@ -1,9 +1,9 @@
 import ColorHash from "color-hash-ts"
 import {
   ColorResolvable,
-  CommandInteraction,
+  CommandInteraction, Guild,
   GuildBasedChannel,
-  GuildChannel, GuildChannelManager,
+  GuildChannel, GuildChannelManager, GuildMemberRoleManager,
   Role,
   SelectMenuInteraction
 } from "discord.js"
@@ -12,8 +12,19 @@ import {newLogger} from "../logging"
 const LOG = newLogger('Util')
 
 export const colorHash = new ColorHash({ lightness: 0.6, saturation: 0.4 })
+
 export function channelToRole(channelName: string): string | undefined {
   return /^🌿[-_\s]([\S\s-_]+)/g.exec(channelName)?.[1].replace(/[-_\s]/i, " ")
+}
+
+export function getPaceChannelDepth(c: GuildBasedChannel | GuildChannel | null): false | number {
+  const parsedString = c?.name.match(/p(\d+)/)?.[1]
+  return parsedString ? parseInt(parsedString) : false
+}
+
+export function getPaceRoleDepth(r: Role): false | number {
+  const parsedString = r.name.match(/ P(\d+)$/)?.[1]
+  return parsedString ? parseInt(parsedString) : false
 }
 
 export function isWorkFlow(c: GuildBasedChannel | GuildChannel | null): boolean {
@@ -27,15 +38,20 @@ export interface Layer {
   feedName: string | undefined
 }
 
-export function serverChannels(interaction: CommandInteraction | SelectMenuInteraction) {
-  return [...interaction.guild?.channels.cache.values() || []]
+export function getServerChannels(g: Guild) {
+  return [...g.channels.cache.values() || []]
 }
 
-export function serverRoles(interaction: CommandInteraction | SelectMenuInteraction) {
-  return [...interaction.guild?.roles.cache.values() || []]
+export function getServerRoles(g: Guild) {
+  return [...g.roles.cache.values() || []]
 }
 
-export function guildLayerMap(channels: GuildChannelManager | undefined) {
+export function getServerMembers(g: Guild) {
+  return [...g.members.cache.values() || []]
+}
+
+export function getLayerMap(g: Guild) {
+  const channels = g.channels
   if (!channels) {
     return {}
   }
@@ -44,14 +60,14 @@ export function guildLayerMap(channels: GuildChannelManager | undefined) {
       if (cur.type === "GUILD_CATEGORY") {
         total[cur.id] = []
       } else {
-        const depthString = cur.name.match(/p(\d+)/)?.[1]
-        if (depthString !== undefined && isWorkFlow(cur.parent)) {
+        const depth = getPaceChannelDepth(cur)
+        if (depth) {
           const parentRoleName = channelToRole(cur.parent?.name || "")
           const id = cur.parentId ?? ""
           total[id].push({
-            depth: parseInt(depthString),
+            depth,
             channel: cur,
-            roleName: `${parentRoleName} P${depthString}`,
+            roleName: `${parentRoleName} P${depth}`,
             feedName: parentRoleName,
           })
           total[id] = total[id].sort((a, b) => a.depth - b.depth)
@@ -61,20 +77,22 @@ export function guildLayerMap(channels: GuildChannelManager | undefined) {
     }, {})
 }
 
-export function getLayerMap(interaction: CommandInteraction | SelectMenuInteraction) {
-  return guildLayerMap(interaction.guild?.channels)
-}
-
-export function getFeedChannels(interaction: CommandInteraction | SelectMenuInteraction) {
-  const channels = serverChannels(interaction)
+export function getFeedChannels(g: Guild) {
+  const channels = getServerChannels(g)
   return channels
     .filter(c => c.type === "GUILD_CATEGORY")
     .filter(isWorkFlow)
 }
 
-export async function fixRolesAndPermissions(interaction: SelectMenuInteraction | CommandInteraction, force = false) {
-  let roles = serverRoles(interaction)
-  const layerMap = getLayerMap(interaction)
+export function getP0Roles(g: Guild) {
+  const roles = getServerRoles(g)
+  return roles
+    .filter(r => getPaceRoleDepth(r) === 0)
+}
+
+export async function fixRolesAndPermissions(g: Guild, force = false) {
+  let roles = getServerRoles(g)
+  const layerMap = getLayerMap(g)
   const layerRoles = Object.values(layerMap)
     .flat()
     .map(l => ({
@@ -91,7 +109,7 @@ export async function fixRolesAndPermissions(interaction: SelectMenuInteraction 
 
   // create missing roles
   await Promise.all(rolesToMake
-    .map(role => interaction.guild?.roles.create({
+    .map(role => g.roles.create({
       name: role.name,
       color: role.color as ColorResolvable,
       reason: "Steward feed role creation",
@@ -101,13 +119,22 @@ export async function fixRolesAndPermissions(interaction: SelectMenuInteraction 
     rolesCreated: rolesToMake
   })
 
+  // assign p0 roles to everyone
+  const p0Roles = getP0Roles(g)
+  const allMembers = getServerMembers(g)
+  await Promise.all(allMembers.map(member => member.roles.add(p0Roles)))
+  LOG.info({
+    event: `Added ${p0Roles.length} P0 roles to all users: ${p0Roles.map(r => r.name).join(", ")}`,
+    rolesCreated: rolesToMake
+  })
+
   // bot role + refresh roles after creating new ones
-  roles = serverRoles(interaction)
+  roles = getServerRoles(g)
   const getRoleByName = (name: string) => roles.find(r => r.name === name) as Role
   const botRole = getRoleByName("Steward")
 
   // bind feed channels to roles
-  const channels = serverChannels(interaction)
+  const channels = getServerChannels(g)
   const findChannelById = (id: string) => channels.find(c => c.id === id) as GuildChannel
   Object.keys(layerMap).forEach(feedCategoryId => {
     // by default, hide from all, allow bot to view
