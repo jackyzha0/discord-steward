@@ -17,7 +17,7 @@ class Starboard {
       .setAuthor({ name: message.author?.username || "", iconURL: message.author?.displayAvatarURL() })
       .setTimestamp(message.createdTimestamp)
       .setDescription(message.content || "")
-      .setFooter({ text: `___\nSurfaced from pace layer ${layer.depth}. Can't see this channel? Try setting the right pace layer by doing /pace set` })
+      .setFooter({ text: `___\nSurfaced from pace layer ${layer.depth} of ${layer.feedName}. Can't see this channel? Try setting the right pace layer by doing /pace set` })
 
     const attachment = message.attachments.first()
     if (attachment) {
@@ -40,13 +40,13 @@ class Starboard {
         }
 
         const sentChannel = reaction.message.channel as GuildChannel
-        const channelSize = sentChannel.members.size
+        const channelSize = sentChannel.members.filter(m => !m.user.bot).size
         const layers = Object.values(getLayerMap(guild)).flat()
 
         // f(x) = ceil(1.3*sqrt(x/2))
         const isHighSignal = (reaction.count || 0) === Math.ceil(1.3 * Math.sqrt(channelSize / 2))
 
-        LOG.trace({
+        LOG.info({
           type: "reaction",
           isHighSignal,
           sentChannel: sentChannel.id,

@@ -10,7 +10,7 @@ import {
   categoryNameToRole,
   colorHash,
   getLayerMap,
-  getP0Roles,
+  getP0Roles, getPaceChannelDepth,
   getServerRoles,
   setLayerProperties
 } from "./commands/roleUtils"
@@ -67,17 +67,27 @@ client.on("channelCreate", async chan => {
     channel: chan.name,
   })
   if (chan.parent) {
-    const roleName = categoryNameToRole(chan.parent.name)
     const layerMap = getLayerMap(chan.guild)
-    if (roleName && chan.parentId && layerMap[chan.parentId]) {
-      // create associated role
-      await chan.guild.roles.create({
-        color: colorHash.hex(chan.parent.name || "") as ColorResolvable,
-        name: roleName
-      })
+    if (chan.parentId && layerMap[chan.parentId]) {
+      const l = layerMap[chan.parentId].find(layer => layer.channel.id === chan.id)
+      if (l) {
+        // create associated role
+        await chan.guild.roles.create({
+          color: colorHash.hex(l.feedName || "") as ColorResolvable,
+          name: l.roleName,
+          reason: "Steward feed role creation",
+        })
 
-      // set permissions + slowmode
-      await setLayerProperties(chan.guild)
+        LOG.info({
+          event: "role creation",
+          guild: chan.guild.name,
+          guildId: chan.guildId,
+          role: l.roleName
+        })
+
+        // set permissions + slowmode
+        await setLayerProperties(chan.guild)
+      }
     }
   }
 })
@@ -91,10 +101,13 @@ client.on("channelDelete", async chan => {
       channelId: chan.id,
       channel: chan.name,
     })
-    if (chan.parent) {
-      const roleName = categoryNameToRole(chan.parent.name)
-      const guild = chan.guild
-      if (roleName) {
+    const guild = chan.guild
+    const layerMap = getLayerMap(guild)
+    if (chan.parentId && layerMap[chan.parentId]) {
+      const depth = getPaceChannelDepth(chan)
+      const roleBase = categoryNameToRole(chan.parent?.name || "")
+      const roleName = `${roleBase} P${depth}`
+      if (depth !== false) {
         const guildRoles = getServerRoles(guild)
         await guildRoles.find(r => r.name === roleName)?.delete()
         LOG.info({

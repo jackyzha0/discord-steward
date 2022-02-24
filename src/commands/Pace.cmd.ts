@@ -10,11 +10,10 @@ import {
 } from "discord.js"
 import {
   categoryNameToRole,
-  fixRolesAndPermissions,
   getLayerMap,
   getFeedChannels,
   getServerRoles,
-  getPaceRoleDepth, getPaceRoleDepthFromString
+  getPaceRoleDepthFromString
 } from "./roleUtils"
 
 const LOG = newLogger('Pace')
@@ -26,7 +25,6 @@ class Pace {
   async list(interaction: CommandInteraction): Promise<unknown> {
     if (interaction.guild) {
       await interaction.deferReply({ ephemeral: true })
-      await fixRolesAndPermissions(interaction.guild)
       traceCommand(LOG, interaction)
 
       const roles = interaction.member?.roles as GuildMemberRoleManager
@@ -82,7 +80,6 @@ class Pace {
   async handlePaceRoleSelection(interaction: SelectMenuInteraction): Promise<unknown> {
     if (interaction.guild) {
       await interaction.deferReply({ ephemeral: true })
-      await fixRolesAndPermissions(interaction.guild)
 
       const selectedRoleValue = interaction.values[0]
       const menu = this.createPaceSelectionMenu(interaction, selectedRoleValue)
@@ -144,7 +141,6 @@ class Pace {
   async set(interaction: CommandInteraction): Promise<unknown> {
     if (interaction.guild) {
       await interaction.deferReply({ ephemeral: true })
-      await fixRolesAndPermissions(interaction.guild)
       traceCommand(LOG, interaction)
 
       const menu = this.createFeedSelectionMenu(interaction)

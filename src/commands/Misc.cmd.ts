@@ -1,7 +1,7 @@
 import {Discord, Slash, SlashGroup} from "discordx"
 import {CommandInteraction, GuildMember, MessageEmbed, Permissions} from "discord.js"
 import {newLogger, traceCommand} from "../logging"
-import {fixRolesAndPermissions, getPaceRoleDepth, getServerRoles, removeAllRoles, setLayerProperties} from "./roleUtils"
+import {fixRolesAndPermissions, removeAllRoles, setLayerProperties} from "./roleUtils"
 
 const LOG = newLogger('Misc')
 

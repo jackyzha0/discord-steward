@@ -108,15 +108,6 @@ export function getP0Roles(g: Guild) {
 export async function fixRolesAndPermissions(g: Guild, force = false) {
   let roles = getServerRoles(g)
 
-  // nuke old roles
-  const rolesToDelete = roles.filter(r => getPaceRoleDepth(r) !== false)
-  await Promise.all(rolesToDelete.map(r => r.delete()))
-
-  LOG.info({
-    event: `deleted ${rolesToDelete.length} roles`,
-    rolesDeleted: rolesToDelete
-  })
-
   const layerMap = getLayerMap(g)
   const layerRoles = Object.values(layerMap)
     .flat()

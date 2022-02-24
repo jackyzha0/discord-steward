@@ -13,7 +13,6 @@ import {
 } from "discord.js"
 import {
   categoryNameToRole,
-  fixRolesAndPermissions,
   getLayerMap,
   getFeedChannels, getServerRoles,
 } from "./roleUtils"
@@ -57,7 +56,6 @@ class FeedsGroup {
     const guild = interaction.guild
     if (guild && interaction.member) {
       await interaction.deferReply({ ephemeral: true })
-      await fixRolesAndPermissions(guild)
 
       const allRoles = getServerRoles(guild)
       const layers = Object.values(getLayerMap(guild)).flat()
@@ -86,7 +84,6 @@ class FeedsGroup {
   async handleLeave(interaction: SelectMenuInteraction): Promise<unknown> {
     if (interaction.guild && interaction.member) {
       await interaction.deferReply({ ephemeral: true })
-      await fixRolesAndPermissions(interaction.guild)
 
       const allRoles = interaction.guild.roles.cache
       const selectedRoleValues = interaction.values || []
@@ -106,7 +103,6 @@ class FeedsGroup {
     const guild = interaction.guild
     if (guild) {
       await interaction.deferReply({ ephemeral: true })
-      await fixRolesAndPermissions(guild)
       traceCommand(LOG, interaction)
 
       const allRoles = getServerRoles(guild)
