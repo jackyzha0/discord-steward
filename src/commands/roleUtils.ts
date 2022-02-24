@@ -167,28 +167,28 @@ export async function setLayerProperties(g: Guild) {
     await cat.permissionOverwrites.create(botRole, { VIEW_CHANNEL: true })
 
     if (isWorkFlow(cat)) {
-      await cat.permissionOverwrites.create(cat.guild.roles.everyone, { VIEW_CHANNEL: false })
 
       // cascade depth role permissions
       const layers = layerMap[feedCategoryId]
-      layers.forEach(l => {
+      await Promise.all(layers.map(async l => {
         const layerRole = getRoleByName(roles, l.roleName)
         if (layerRole) {
           // get all depths below current depth
           const viewableLayers = layers.filter(pl => pl.depth <= l.depth)
-          viewableLayers.forEach(vl => {
+          await Promise.all(viewableLayers.map(async vl => {
             // set permissions
             const chan = vl.channel as TextChannel
-            chan.permissionOverwrites.create(layerRole, { VIEW_CHANNEL: true })
+            await chan.permissionOverwrites.create(cat.guild.roles.everyone, { VIEW_CHANNEL: false })
+            await chan.permissionOverwrites.create(layerRole, { VIEW_CHANNEL: true })
 
             // set slow mode
             // f(x) = 4^(-x)
             const messageFrequencySeconds = Math.floor(60 * 60 * Math.pow(4, -vl.depth))
-            chan.setRateLimitPerUser(messageFrequencySeconds, "Adjusting slow-mode for pace layer")
+            await chan.setRateLimitPerUser(messageFrequencySeconds, "Adjusting slow-mode for pace layer")
             channelsModified++
-          })
+          }))
         }
-      })
+      }))
     } else {
       await cat.permissionOverwrites.delete(cat.guild.roles.everyone)
       channelsModified++
@@ -214,4 +214,8 @@ export async function removeAllRoles(g: Guild) {
     rolesDeleted: feedRoles
   })
   return feedRoles
+}
+
+export function dedupe<T>(arr: T[], propname: keyof T) {
+  return arr.filter((rep, i) => arr.findIndex(r => r[propname] === rep[propname]) === i)
 }

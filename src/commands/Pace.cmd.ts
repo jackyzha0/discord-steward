@@ -13,7 +13,7 @@ import {
   getLayerMap,
   getFeedChannels,
   getServerRoles,
-  getPaceRoleDepthFromString
+  getPaceRoleDepthFromString, dedupe
 } from "./roleUtils"
 
 const LOG = newLogger('Pace')
@@ -30,7 +30,7 @@ class Pace {
       const roles = interaction.member?.roles as GuildMemberRoleManager
       const roleNames = [...roles.cache.values()].map(r => r.name)
       const layers = Object.values(getLayerMap(interaction.guild)).flat()
-      const associatedLayers = layers.filter(l => roleNames.includes(l.roleName))
+      const associatedLayers = dedupe(layers.filter(l => roleNames.includes(l.roleName)), "roleName")
 
       const layout = associatedLayers.map(l => {
         const allOtherLayersInFeed = layers
@@ -100,8 +100,9 @@ class Pace {
           label: `Pace Layer ${l.depth}`,
           value: l.roleName
         }))
+      const deduped = dedupe(associatedRoles, "value")
       const roleSelection = new MessageSelectMenu()
-        .addOptions(associatedRoles)
+        .addOptions(deduped)
         .setPlaceholder(`Select pace layer for ${feedName}`)
         .setCustomId("pace-select-menu")
       return new MessageActionRow().addComponents(roleSelection)

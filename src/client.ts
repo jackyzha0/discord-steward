@@ -10,7 +10,7 @@ import {
   categoryNameToRole,
   colorHash,
   getLayerMap,
-  getP0Roles, getPaceChannelDepth,
+  getP0Roles, getPaceChannelDepth, getServerMembers,
   getServerRoles,
   setLayerProperties
 } from "./commands/roleUtils"
@@ -87,6 +87,21 @@ client.on("channelCreate", async chan => {
 
         // set permissions + slowmode
         await setLayerProperties(chan.guild)
+
+        // give everyone role if this is p0
+        if (l.depth === 0) {
+          // find role
+          const serverRoles = getServerRoles(chan.guild)
+          const role = serverRoles.find(r => r.name === l.roleName)
+          if (role) {
+            const allMembers = getServerMembers(chan.guild).filter(p => !p.user.bot)
+            await Promise.all(allMembers.map(member => member.roles.add(role)))
+            LOG.info({
+              event: `Added ${l.roleName} role to ${allMembers.length} users`,
+              rolesCreated: [l.roleName]
+            })
+          }
+        }
       }
     }
   }
